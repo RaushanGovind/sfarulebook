@@ -1,133 +1,247 @@
-import React, { useState } from 'react';
-import { X, Moon, Sun, Type, Layout } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, User, Shield, Monitor } from 'lucide-react';
 
-export default function SettingsModal({ settings, onSave, onClose, onReset, onResetContent }) {
+const API_URL = 'http://127.0.0.1:5000/api';
+
+export default function SettingsModal({ settings, onSave, onClose, onReset, onResetContent, user }) {
     const [localSettings, setLocalSettings] = useState(settings);
+    const [passData, setPassData] = useState({ current: '', new: '' });
+    const [activeTab, setActiveTab] = useState('appearance'); // appearance, security, users
+    const [users, setUsers] = useState([]);
+    const [loadingUsers, setLoadingUsers] = useState(false);
 
-    const handleChange = (key, value) => {
-        setLocalSettings(prev => ({
-            ...prev,
-            [key]: value
-        }));
+    useEffect(() => {
+        setLocalSettings(settings);
+    }, [settings]);
+
+    useEffect(() => {
+        if (activeTab === 'users' && user?.role === 'admin') {
+            fetchUsers();
+        }
+    }, [activeTab]);
+
+    const fetchUsers = async () => {
+        setLoadingUsers(true);
+        try {
+            const token = localStorage.getItem("sfaToken");
+            const res = await fetch(`${API_URL}/users`, {
+                headers: { 'x-auth-token': token }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setUsers(data);
+            }
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoadingUsers(false);
+        }
     };
 
+    const toggleAdmin = async (userId, currentRole) => {
+        if (!confirm(`Are you sure?`)) return;
+        // Logic to toggle role
+        const newRole = currentRole === 'admin' ? 'member' : 'admin';
+        const token = localStorage.getItem("sfaToken");
+        try {
+            const res = await fetch(`${API_URL}/users/${userId}/role`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                body: JSON.stringify({ role: newRole })
+            });
+            if (res.ok) {
+                setUsers(users.map(u => u._id === userId ? { ...u, role: newRole } : u));
+            } else {
+                alert("Failed to update role");
+            }
+        } catch (e) { alert("Network Error"); }
+    };
+
+    const handleSave = () => {
+        onSave(localSettings);
+    };
+
+    const handleChangePassword = async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem("sfaToken");
+        try {
+            const res = await fetch(`${API_URL}/auth/password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'x-auth-token': token },
+                body: JSON.stringify({ currentPassword: passData.current, newPassword: passData.new })
+            });
+            if (res.ok) {
+                alert("Password changed!");
+                setPassData({ current: '', new: '' });
+            } else {
+                const d = await res.json();
+                alert(d.message);
+            }
+        } catch (e) { alert("Error changing password"); }
+    };
+
+    if (!localSettings) return null;
+
+    const TabButton = ({ id, label, icon: Icon }) => (
+        <button
+            onClick={() => setActiveTab(id)}
+            style={{
+                flex: 1, padding: '10px', background: activeTab === id ? 'var(--color-bg)' : 'transparent',
+                border: 'none', borderBottom: activeTab === id ? '2px solid var(--color-accent)' : '2px solid transparent',
+                cursor: 'pointer', fontWeight: 600, color: activeTab === id ? 'var(--color-primary)' : 'var(--color-text-muted)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+            }}
+        >
+            {Icon && <Icon size={16} />} {label}
+        </button>
+    );
+
     return (
-        <div className="modal-overlay" onClick={(e) => {
-            if (e.target === e.currentTarget) onClose();
-        }}>
-            <div className="modal-card">
-                <div className="modal-header">
-                    <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <Layout size={20} />
-                        Appearance
-                    </h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--color-text-muted)' }}>
-                        <X size={24} />
+        <div className="modal-overlay" style={{ zIndex: 4000 }}>
+            <div className="modal-card" style={{ maxWidth: '500px', width: '95%', padding: 0, overflow: 'hidden' }}>
+                <div className="modal-header" style={{ padding: '15px 20px', borderBottom: '1px solid var(--color-border)' }}>
+                    <h2>Settings</h2>
+                    <button onClick={onClose} className="icon-btn" style={{ border: 'none' }}>
+                        <X size={20} />
                     </button>
                 </div>
 
-                {/* Font Family */}
-                <div className="setting-group">
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                        <Type size={16} /> Font Family
-                    </label>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                        {["'Inter', 'Noto Sans Devanagari', sans-serif", 'Georgia, serif', 'Courier New, monospace'].map((font) => (
-                            <button
-                                key={font}
-                                onClick={() => handleChange('fontFamily', font)}
-                                style={{
-                                    padding: '10px',
-                                    border: `1px solid ${localSettings.fontFamily === font ? 'var(--color-accent)' : 'var(--color-border)'}`,
-                                    borderRadius: '8px',
-                                    background: localSettings.fontFamily === font ? 'var(--color-sidebar-active)' : 'transparent',
-                                    color: 'var(--color-text-main)',
-                                    cursor: 'pointer',
-                                    fontFamily: font
-                                }}
-                            >
-                                {font.split(',')[0].replace(/'/g, "")}
-                            </button>
-                        ))}
-                    </div>
+                {/* Tabs */}
+                <div style={{ display: 'flex', borderBottom: '1px solid var(--color-border)', background: 'var(--color-bg-secondary)' }}>
+                    <TabButton id="appearance" label="Appearance" icon={Monitor} />
+                    <TabButton id="security" label="Security" icon={Shield} />
+                    {user?.role === 'admin' && <TabButton id="users" label="Users" icon={User} />}
                 </div>
 
-                {/* Font Size */}
-                <div className="setting-group">
-                    <label style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                        <span>Font Size</span>
-                        <span style={{ color: 'var(--color-text-muted)' }}>{localSettings.fontSize}px</span>
-                    </label>
-                    <input
-                        type="range"
-                        min="14"
-                        max="24"
-                        step="1"
-                        value={localSettings.fontSize}
-                        onChange={(e) => handleChange('fontSize', Number(e.target.value))}
-                        style={{ width: '100%', accentColor: 'var(--color-accent)' }}
-                    />
-                </div>
+                <div style={{ padding: '20px', maxHeight: '60vh', overflowY: 'auto' }}>
 
-                {/* Colors */}
-                <div className="setting-group">
-                    <label>Theme Colors (Custom Override)</label>
-                    <div style={{ display: 'flex', gap: '20px', marginTop: '10px' }}>
-                        <div>
-                            <label style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Background</label>
-                            <input type="color" value={localSettings.bgColor} onChange={(e) => handleChange('bgColor', e.target.value)} />
+                    {/* APPEARANCE TAB */}
+                    {activeTab === 'appearance' && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>Font Family</label>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button
+                                        className={`filter-chip ${localSettings.fontFamily.includes('Inter') ? 'active' : ''}`}
+                                        onClick={() => setLocalSettings({ ...localSettings, fontFamily: "'Inter', sans-serif" })}
+                                    >
+                                        Modern
+                                    </button>
+                                    <button
+                                        className={`filter-chip ${localSettings.fontFamily.includes('Serif') ? 'active' : ''}`}
+                                        onClick={() => setLocalSettings({ ...localSettings, fontFamily: "'Merriweather', serif" })}
+                                    >
+                                        Classic
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>Font Size ({localSettings.fontSize}px)</label>
+                                <input
+                                    type="range" min="14" max="24" value={localSettings.fontSize}
+                                    onChange={(e) => setLocalSettings({ ...localSettings, fontSize: Number(e.target.value) })}
+                                    style={{ width: '100%' }}
+                                />
+                            </div>
+                            <div>
+                                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>Theme Colors</label>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    {[
+                                        { bg: '#ffffff', text: '#334155', sBg: '#ffffff', sText: '#334155', name: 'Light' },
+                                        { bg: '#fef2f2', text: '#450a0a', sBg: '#fff1f2', sText: '#881337', name: 'Rose' },
+                                        { bg: '#f0fdf4', text: '#052e16', sBg: '#f0fdfa', sText: '#064e3b', name: 'Green' },
+                                        { bg: '#1e293b', text: '#e2e8f0', sBg: '#0f172a', sText: '#94a3b8', name: 'Dark' }
+                                    ].map(t => (
+                                        <div key={t.name}
+                                            onClick={() => setLocalSettings({ ...localSettings, bgColor: t.bg, textColor: t.text, sidebarBg: t.sBg, sidebarText: t.sText })}
+                                            style={{
+                                                width: '30px', height: '30px', borderRadius: '50%', background: t.bg,
+                                                border: `2px solid ${localSettings.bgColor === t.bg ? 'var(--color-accent)' : '#ccc'}`, cursor: 'pointer'
+                                            }}
+                                            title={t.name}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
                         </div>
-                        <div>
-                            <label style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>Text</label>
-                            <input type="color" value={localSettings.textColor} onChange={(e) => handleChange('textColor', e.target.value)} />
-                        </div>
-                    </div>
-                </div>
-
-                <div style={{ marginTop: '30px', display: 'flex', gap: '10px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                    {onResetContent && (
-                        <button
-                            onClick={onResetContent}
-                            style={{
-                                padding: '10px 16px',
-                                background: '#fee2e2',
-                                border: '1px solid #ef4444',
-                                borderRadius: '8px',
-                                color: '#b91c1c',
-                                cursor: 'pointer',
-                                marginRight: 'auto',
-                                fontSize: '0.85rem'
-                            }}
-                        >
-                            Reset Content
-                        </button>
                     )}
-                    <button
-                        onClick={onReset}
-                        style={{
-                            padding: '10px 16px',
-                            background: 'transparent',
-                            border: '1px solid var(--color-border)',
-                            borderRadius: '8px',
-                            color: 'var(--color-text-muted)',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        Reset Defaults
-                    </button>
-                    <button
-                        onClick={() => onSave(localSettings)}
-                        style={{
-                            padding: '10px 24px',
-                            background: 'var(--color-accent)',
-                            border: 'none',
-                            borderRadius: '8px',
-                            color: 'white',
-                            fontWeight: 600,
-                            cursor: 'pointer',
-                            boxShadow: '0 4px 6px -1px rgba(37, 99, 235, 0.3)'
-                        }}
-                    >
+
+                    {/* SECURITY TAB */}
+                    {activeTab === 'security' && (
+                        <form onSubmit={handleChangePassword} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                            <p style={{ fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
+                                Update your password below. If you logged in via Google, you cannot change your password here.
+                            </p>
+                            <input
+                                type="password" placeholder="Current Password" required
+                                className="search-input"
+                                value={passData.current}
+                                onChange={e => setPassData({ ...passData, current: e.target.value })}
+                            />
+                            <input
+                                type="password" placeholder="New Password" required
+                                className="search-input"
+                                value={passData.new}
+                                onChange={e => setPassData({ ...passData, new: e.target.value })}
+                            />
+                            <button type="submit" className="action-btn" style={{ background: 'var(--color-accent)', color: 'white' }}>
+                                Change Password
+                            </button>
+                        </form>
+                    )}
+
+                    {/* USERS TAB */}
+                    {activeTab === 'users' && (
+                        <div>
+                            {loadingUsers ? <p>Loading...</p> : (
+                                <table style={{ width: '100%', fontSize: '0.9rem' }}>
+                                    <tbody>
+                                        {users.map(u => (
+                                            <tr key={u._id} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                                                <td style={{ padding: '10px 0' }}>
+                                                    <div style={{ fontWeight: 600 }}>{u.username}</div>
+                                                    <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                                                        {u.role.toUpperCase()} {u._id === user.id && '(You)'}
+                                                    </div>
+                                                </td>
+                                                <td style={{ textAlign: 'right' }}>
+                                                    {u._id !== user.id && (
+                                                        <button
+                                                            onClick={() => toggleAdmin(u._id, u.role)}
+                                                            style={{
+                                                                padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--color-border)',
+                                                                background: u.role === 'admin' ? '#fee2e2' : '#dcfce7',
+                                                                color: u.role === 'admin' ? '#b91c1c' : '#166534',
+                                                                fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer'
+                                                            }}
+                                                        >
+                                                            {u.role === 'admin' ? 'Revoke' : 'Promote'}
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                            {!loadingUsers && users.length === 0 && <p style={{ color: '#888' }}>No users found.</p>}
+                        </div>
+                    )}
+
+                </div>
+
+                <div className="modal-footer" style={{ padding: '15px 20px', background: 'var(--color-bg-secondary)', borderTop: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        {onResetContent && (
+                            <button onClick={() => { if (confirm("Clear content?")) onResetContent(); }} style={{ background: 'transparent', border: 'none', color: '#f59e0b', cursor: 'pointer', fontSize: '0.9rem' }}>
+                                Reset Content
+                            </button>
+                        )}
+                        <button onClick={onReset} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.9rem' }}>
+                            Reset Defaults
+                        </button>
+                    </div>
+                    <button onClick={handleSave} className="action-btn" style={{ background: 'var(--color-primary)', color: 'white' }}>
                         Save Changes
                     </button>
                 </div>

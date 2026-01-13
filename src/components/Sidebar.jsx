@@ -95,6 +95,18 @@ export default function Sidebar({ lessons, currentIndex, onSelect, isOpen, onClo
                                     if (!searchTerm) lastLevel = lesson.level;
                                     const itemId = `item-${lesson.originalIndex}`;
 
+                                    const isLinkRule = lesson.fromLink;
+                                    const itemStyle = isLinkRule ? {
+                                        backgroundColor: '#1e293b',
+                                        color: '#ffffff',
+                                        fontWeight: 'bold',
+                                        border: '1px solid #475569',
+                                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                    } : {
+                                        opacity: 0.6,
+                                        filter: 'grayscale(0.5)'
+                                    };
+
                                     return (
                                         <React.Fragment key={itemId}>
                                             {showHeader && (
@@ -117,10 +129,13 @@ export default function Sidebar({ lessons, currentIndex, onSelect, isOpen, onClo
                                                         if (window.innerWidth < 768) onCloseMobile();
                                                     }}
                                                     ref={lesson.originalIndex === currentIndex ? activeRef : null}
-                                                    style={{ cursor: isEditor ? 'grab' : 'pointer' }}
+                                                    style={{
+                                                        cursor: isEditor ? 'grab' : 'pointer',
+                                                        ...itemStyle
+                                                    }}
                                                 >
                                                     {isEditor && (
-                                                        <GripVertical size={16} style={{ color: 'var(--color-text-muted)', marginRight: '4px' }} />
+                                                        <GripVertical size={16} style={{ color: isLinkRule ? '#94a3b8' : 'var(--color-text-muted)', marginRight: '4px' }} />
                                                     )}
 
                                                     {/* Title */}
@@ -167,6 +182,18 @@ export default function Sidebar({ lessons, currentIndex, onSelect, isOpen, onClo
                             const showHeader = lesson.level !== lastLevel;
                             if (!searchTerm) lastLevel = lesson.level;
 
+                            const isLinkRule = lesson.fromLink;
+                            const itemStyle = isLinkRule ? {
+                                backgroundColor: '#0f172a', // Slightly darker for static
+                                color: '#f8fafc',
+                                fontWeight: 'bold',
+                                borderLeft: '4px solid #3b82f6',
+                                paddingLeft: '8px' // Adjust padding for border
+                            } : {
+                                opacity: 0.6,
+                                filter: 'grayscale(100%)' // Stronger haze
+                            };
+
                             return (
                                 <React.Fragment key={lesson.originalIndex}>
                                     {showHeader && (
@@ -188,6 +215,7 @@ export default function Sidebar({ lessons, currentIndex, onSelect, isOpen, onClo
                                             if (window.innerWidth < 768) onCloseMobile();
                                         }}
                                         ref={lesson.originalIndex === currentIndex ? activeRef : null}
+                                        style={itemStyle}
                                     >
                                         <span style={{ fontSize: '0.8rem', opacity: 0.7, minWidth: '20px', display: 'none' }}>
                                         </span>

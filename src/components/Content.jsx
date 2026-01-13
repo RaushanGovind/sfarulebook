@@ -111,29 +111,52 @@ export default function Content({ lesson, onPrev, onNext, hasPrev, hasNext, lang
                     <div className="prose" dangerouslySetInnerHTML={{ __html: getContent() }} />
                 )}
 
-                {/* Navigation Footer - Hide in Edit mode if desired, or keep */}
+                {/* Navigation Footer */}
                 {!isEditor && (
                     <div className="nav-footer">
-                        <button
-                            className="nav-btn"
-                            onClick={onPrev}
-                            disabled={!hasPrev}
-                        >
+                        <button className="nav-btn" onClick={onPrev} disabled={!hasPrev}>
                             <ChevronLeft size={16} />
                             {language === 'hi' ? 'पिछला' : 'Previous'}
                         </button>
-
-                        <button
-                            className="nav-btn"
-                            onClick={onNext}
-                            disabled={!hasNext}
-                        >
+                        <button className="nav-btn" onClick={onNext} disabled={!hasNext}>
                             {language === 'hi' ? 'अगला' : 'Next'}
                             <ChevronRight size={16} />
                         </button>
                     </div>
                 )}
 
+                {/* History Section */}
+                {lesson.history && lesson.history.length > 0 && (
+                    <div style={{ marginTop: '60px', borderTop: '2px dashed var(--color-border)', paddingTop: '30px' }}>
+                        <h3 style={{ fontSize: '1.2rem', color: 'var(--color-text-muted)', marginBottom: '20px' }}>
+                            📜 Rule Revision History
+                        </h3>
+                        {lesson.history.slice().reverse().map((hist, idx) => {
+                            const histContent = typeof hist.content === 'string' ? hist.content : (hist.content[language] || hist.content['en']);
+                            return (
+                                <div key={idx} style={{
+                                    marginBottom: '20px',
+                                    padding: '15px',
+                                    background: 'var(--color-bg-sidebar)',
+                                    borderRadius: '8px',
+                                    border: '1px solid var(--color-border)'
+                                }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                                        <div style={{ fontWeight: 'bold', fontSize: '0.9rem', color: 'var(--color-text-muted)' }}>
+                                            Vers. {lesson.history.length - idx} &bull; {new Date(hist.approvedAt).toLocaleDateString()} {new Date(hist.approvedAt).toLocaleTimeString()}
+                                        </div>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                                            {hist.changeSummary || "Archived"}
+                                        </div>
+                                    </div>
+                                    <div className="prose" style={{ opacity: 0.8, fontSize: '0.95em' }}>
+                                        <div dangerouslySetInnerHTML={{ __html: histContent }} />
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
             </div>
 
             <div style={{ textAlign: 'center', marginTop: '40px', marginBottom: '40px', color: 'var(--color-text-muted)', fontSize: '0.8rem' }}>

@@ -1,4 +1,63 @@
 export const lessons = [
+  {
+    level: "ACTIVE RULE (2026)",
+    fromLink: true, // Custom flag for styling
+    title: {
+      en: "SFA Active Rules & Terms",
+      hi: "SFA सक्रिय नियम और शर्तें"
+    },
+    content: {
+      en: `
+        <h1>SFA DETAILS & TERMS (FROM SOURCE)</h1>
+        <hr>
+        <h2>1. SFA Group Definition (Active)</h2>
+        <p><b>Special Financial Assistance Group (SFA Group)</b> is a significant special organization formed by members doing similar work, in similar circumstances, and with similar thinking.</p>
+        <p>SFA Group is not connected to any union, finance institution, caste-specific group, region-specific group, or government institution. It is a self-help group operated with the spirit of mutual financial cooperation.</p>
+        <p>SFA Group does not affect Rail Operation System or Rail Rules in any way.</p>
+        
+        <h2>2. Core Objective</h2>
+        <p>To provide financial assistance of ₹20,000 per month to a member who is on long sick leave (after LAP/HLAP exhaustion and zero basic pay) until their salary resumes.</p>
+        <p><i>Note: If members > 2000, assistance may increase to ₹25,000.</i></p>
+        <p><b>Dismissal Support:</b> Assistance of ₹20,000/month for 2 years for members dismissed due to SPAD or other reasons (excluding VRS cases where 3-5 Lakh lumpsum may be considered).</p>
+
+        <hr>
+        <h2>3. ESSENTIAL TERMS AND CONDITIONS</h2>
+        <ul>
+            <li><b>1. Voluntary & WhatsApp Based:</b> Fully volunteer-based, operated on WhatsApp. Dependent on minimal contributions. Eligible receivers are those in financial distress.</li>
+            <li><b>2. Joining:</b> via WhatsApp Link & Google Form.</li>
+            <li><b>3. Identity:</b> Mandatory to provide Name, Post, HQ, CMS ID, Blood Group. Failure leads to removal.</li>
+            <li><b>4. Admin Mode:</b> Groups (SFA1 & SFA2) remain in "Only Admin" mode. Can open to "All Participants" if needed. No arguments/legal threats allowed.</li>
+            <li><b>5. Dispute Resolution:</b> Not a legal matter; majority decision of members is final.</li>
+            <li><b>6. Structure:</b> Operated via Lobby-wise Working Bodies. Members must know their Lobby representatives.</li>
+            <li><b>7. Process:</b> New members & Collection requests are processed only through the Lobby-wise Working Body.</li>
+        </ul>
+      `,
+      hi: `
+        <h1>SFA विवरण और शर्तें (स्रोत से)</h1>
+        <hr>
+        <h2>1. SFA समूह परिभाषा (सक्रिय)</h2>
+        <p><b>विशेष आर्थिक सहायता समूह (SFA Group)</b> एक जैसा कार्य करने वाले, समान परिस्थितियों वाले तथा एक समान सोच रखने वाले सदस्यों द्वारा बनाया गया एक विशेष संगठन है।</p>
+        <p>यह किसी भी यूनियन, वित्त संस्था, जाति/क्षेत्र विशेष या सरकारी संस्था से नहीं जुड़ा है। यह पूर्णतः आपसी सहयोग की भावना से संचालित स्वयं सहायता समूह है।</p>
+        
+        <h2>2. मुख्य उद्देश्य</h2>
+        <p>यदि कोई कर्मचारी लंबी बीमारी (SICK) पर है, HLAP/LAP समाप्त हो चुकी है और वेतन शून्य है, तो SFA Group के माध्यम से <b>₹20,000 प्रति माह</b> की सहायता दी जाएगी जब तक वेतन पुनः शुरू न हो।</p>
+        <p><i>नोट: यदि सदस्य संख्या 2000+ होती है, तो राशि ₹25,000 करने पर विचार किया जाएगा।</i></p>
+        <p><b>बर्खास्तगी पर:</b> नौकरी से बर्खास्त होने पर 2 वर्ष तक ₹20,000 प्रति माह की सहायता। (वी.आर.एस. रहित बर्खास्तगी पर 3-5 लाख की एकमुश्त सहायता पर विचार)।</p>
+
+        <hr>
+        <h2>3. आवश्यक शर्तें (Essential Terms)</h2>
+        <ul>
+            <li><b>1. स्वैच्छिक और व्हाट्सएप आधारित:</b> यह व्हाट्सएप पर संचालित स्वयंसेवी संस्था है। केवल संकटग्रस्त सदस्य ही लाभ के पात्र हैं।</li>
+            <li><b>2. शामिल होना:</b> व्हाट्सएप लिंक और Google फॉर्म के माध्यम से।</li>
+            <li><b>3. पहचान:</b> नाम, पद, मुख्यालय, CMS ID, ब्लड ग्रुप बताना अनिवार्य है। अन्यथा निष्कासन।</li>
+            <li><b>4. एडमिन मोड:</b> ग्रुप सदैव 'Only Admin' मोड पर रहेगा। कोई बहस या कानूनी धमकी स्वीकार्य नहीं।</li>
+            <li><b>5. विवाद:</b> यह न्यायालय का विषय नहीं होगा। बहुमत का निर्णय अंतिम होगा।</li>
+            <li><b>6. संरचना:</b> लॉबी-वार वर्किंग बॉडी द्वारा संचालित। अपने प्रतिनिधि को जानें।</li>
+            <li><b>7. प्रक्रिया:</b> नए सदस्यों को जोड़ना और सहयोग राशि का संग्रह केवल वर्किंग बॉडी के माध्यम से होगा।</li>
+        </ul>
+      `
+    }
+  },
   // ==========================================
   // SECTION 1: SHORT CONSTITUTION
   // ==========================================

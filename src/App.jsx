@@ -5,16 +5,30 @@ import Sidebar from './components/Sidebar'
 import Content from './components/Content'
 import SettingsModal from './components/SettingsModal'
 import AddLessonModal from './components/AddLessonModal'
-import { Menu, Settings, Moon, Sun, Globe, User, Edit3 } from 'lucide-react'
+import AuthModal from './components/AuthModal'
+import ProposalList from './components/ProposalList'
+import { Menu, Settings, Moon, Sun, Globe, User, Edit3, LogOut, FileText, Users } from 'lucide-react'
+import { GoogleOAuthProvider } from '@react-oauth/google';
+
+// Backend URL
+const API_URL = 'http://127.0.0.1:5000/api';
+const GOOGLE_CLIENT_ID = "303925272558-n32fq4gjrd9hr69jhf58jmnc5933su4p.apps.googleusercontent.com";
 
 function App() {
-    // Data State (with local storage persistence)
-    const [lessonsData, setLessonsData] = useState(() => {
-        const saved = localStorage.getItem("sfaRulesData");
-        return saved ? JSON.parse(saved) : initialLessons;
+    // Auth State
+    const [user, setUser] = useState(() => {
+        const saved = localStorage.getItem("sfaUser");
+        return saved ? JSON.parse(saved) : null;
     });
+    const [showAuthModal, setShowAuthModal] = useState(false);
+    const [showUserModal, setShowUserModal] = useState(false);
 
-    // Editor Mode State
+    // Data State
+    const [lessonsData, setLessonsData] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [showProposals, setShowProposals] = useState(false);
+
+    // Editor Mode
     const [isEditor, setIsEditor] = useState(false);
     const [showAddModal, setShowAddModal] = useState(false);
 
@@ -26,9 +40,7 @@ function App() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile sidebar state
 
     // Theme state
-    const [isDarkMode, setIsDarkMode] = useState(() => {
-        return localStorage.getItem("darkMode") === "1";
-    });
+    const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem("darkMode") === "1");
 
     // Settings state (Font, Colors)
     const defaultSettings = {
@@ -47,6 +59,42 @@ function App() {
 
     const [showSettings, setShowSettings] = useState(false);
     const [language, setLanguage] = useState(() => localStorage.getItem("sfaLanguage") || "hi");
+
+    // --- EFFECTS ---
+
+    // Load Data from Backend
+    useEffect(() => {
+        fetchLessons();
+    }, [showProposals]); // Refetch when leaving proposals view in case something was published
+
+    const fetchLessons = async () => {
+        try {
+            const res = await fetch(`${API_URL}/lessons`);
+            if (!res.ok) throw new Error("Failed to fetch");
+            const data = await res.json();
+
+            // If DB is empty, use initial locally and seed it? 
+            // For now, if empty array, fallback to initial to avoid blank screen, BUT prompt to seed.
+            if (data.length === 0) {
+                setLessonsData(initialLessons);
+                // Optional: Auto-seed?
+                seedDatabase(initialLessons);
+            } else {
+                setLessonsData(data);
+            }
+        } catch (err) {
+            console.error("Fetch Error", err);
+            // Fallback to local
+            setLessonsData(initialLessons);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const seedDatabase = async (data) => {
+        // Only run if we really want to auto-seed
+        // Actually seeding requires admin auth now.
+    };
 
     useEffect(() => {
         localStorage.setItem("sfaLanguage", language);
@@ -79,10 +127,22 @@ function App() {
         localStorage.setItem("currentIndex", currentIndex);
     }, [currentIndex]);
 
-    // Persist Data
-    useEffect(() => {
-        localStorage.setItem("sfaRulesData", JSON.stringify(lessonsData));
-    }, [lessonsData]);
+    // --- HANDLERS ---
+
+    const handleLogin = (authData) => {
+        setUser(authData.user);
+        localStorage.setItem("sfaUser", JSON.stringify(authData.user));
+        // Also store token if needed for authenticated requests
+        localStorage.setItem("sfaToken", authData.token);
+    };
+
+    const handleLogout = () => {
+        setUser(null);
+        setIsEditor(false); // Exit edit mode
+        setShowProposals(false);
+        localStorage.removeItem("sfaUser");
+        localStorage.removeItem("sfaToken");
+    };
 
     const handleNext = () => {
         if (currentIndex < lessonsData.length - 1) {
@@ -98,51 +158,94 @@ function App() {
         }
     };
 
-    const handleSaveLessonContent = (newContent) => {
-        const updatedLessons = [...lessonsData];
-        const currentLesson = updatedLessons[currentIndex];
+    // PROPOSAL SUBMISSION LOGIC
+    const createProposal = async (action, data, originalId = null) => {
+        const token = localStorage.getItem("sfaToken");
+        if (!token) return alert("Please login first");
 
-        // Handle bilingual vs string content
-        if (currentLesson.content && typeof currentLesson.content === 'object') {
-            currentLesson.content[language] = newContent;
-        } else {
-            // Fallback if structure is simple string (though data.js uses objects)
-            // If it was a string, we assume it's universal (rare case in this app)
-            // Or we convert it to object? Let's keep it simple:
-            currentLesson.content = newContent;
+        const payload = {
+            action,
+            originalLessonId: originalId,
+            ...data
+        };
+
+        try {
+            const res = await fetch(`${API_URL}/proposals`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-auth-token': token
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                alert("Proposal saved as Draft! It will appear in 'Proposals' for approval.");
+                setShowProposals(true); // Switch to view
+            } else {
+                const err = await res.json();
+                alert("Error: " + err.message);
+            }
+        } catch (e) {
+            alert("Network Error");
         }
+    };
 
-        setLessonsData(updatedLessons);
+    const handleSaveLessonContent = async (newContent) => {
+        const currentLesson = lessonsData[currentIndex];
+
+        // Prepare content object correctly
+        let updatedContent = currentLesson.content;
+        if (typeof updatedContent === 'string') {
+            // Convert to object if it was string
+            updatedContent = { 'en': currentLesson.content, 'hi': '' };
+        } else {
+            updatedContent = { ...updatedContent }; // clean copy
+        }
+        updatedContent[language] = newContent;
+
+        // Create Proposal
+        await createProposal('edit', {
+            title: currentLesson.title,
+            content: updatedContent,
+            level: currentLesson.level,
+            order: currentLesson.order
+        }, currentLesson._id);
     };
 
     // Add/Delete Implementation
-    const handleDeleteLesson = (indexToDelete) => {
-        const updated = lessonsData.filter((_, i) => i !== indexToDelete);
-        setLessonsData(updated);
-        // Adjust current index if needed
-        if (currentIndex >= indexToDelete && currentIndex > 0) {
-            setCurrentIndex(currentIndex - 1);
-        } else if (updated.length === 0) {
-            setCurrentIndex(0); // or handle empty state
+    const handleDeleteLesson = async (indexToDelete) => {
+        const lesson = lessonsData[indexToDelete];
+        if (confirm("Are you sure? This will create a proposal to DELETE this lesson.")) {
+            await createProposal('delete', {}, lesson._id);
         }
     };
 
-    const handleAddLesson = (newLessonData) => {
-        setLessonsData([...lessonsData, newLessonData]);
-        // Optionally jump to the new lesson
-        setCurrentIndex(lessonsData.length);
+    const handleAddLesson = async (newLessonData) => {
+        await createProposal('add', newLessonData);
     };
 
     // Reorder Implementation
-    const handleReorder = (oldIndex, newIndex) => {
+    const handleReorder = async (oldIndex, newIndex) => {
+        // Reordering is complex via proposals. For now, let's keep it immediate for admins 
+        // OR disable it for now until we have a 'Reorder Proposal' type.
+        // Let's assume reorder is still direct admin privilege for simplicity, 
+        // or just update local view and warn it won't save.
+
+        // For this task, let's just update local view but warn.
         setLessonsData((items) => {
             const reordered = arrayMove(items, oldIndex, newIndex);
 
-            // Note: If we move an item into a new "Level" block, 
-            // the visual grouping in sidebar will just reflect its new position.
-            // The 'level' property of the item itself stays the same.
-            // If the user wants to truly 'move' it to another chapter, they might expect the level to update.
-            // For now, simple sorting. Efficient for rearranging within same chapter or moving distinct blocks.
+            // Send reorder to backend (Optimistic UI update first)
+            // const token = localStorage.getItem("sfaToken");
+            // fetch(`${API_URL}/lessons/reorder`, {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //         'x-auth-token': token
+            //     },
+            //     body: JSON.stringify(reordered.map((l, i) => ({ _id: l._id, order: i })))
+            // });
 
             return reordered;
         });
@@ -163,18 +266,34 @@ function App() {
 
     // Reset Data (Debug/Rescue)
     const handleResetData = () => {
-        if (confirm("Are you sure you want to reset all content to default? All changes will be lost.")) {
-            setLessonsData(initialLessons);
-            localStorage.removeItem("sfaRulesData");
-            setCurrentIndex(0);
-        }
-    }
+        // Now mostly pointless unless clearing server db?
+        // Let's keep it local clear for settings
+        setSettings(defaultSettings);
+    };
 
     // Prepare styles
     const sidebarStyles = settings.sidebarBg !== defaultSettings.sidebarBg ? {
         backgroundColor: settings.sidebarBg,
         color: settings.sidebarText
     } : {};
+
+    if (loading) return <div className="app-layout" style={{ justifyContent: 'center', alignItems: 'center' }}>Loading Rules...</div>;
+
+    if (showProposals) {
+        return (
+            <div className="app-layout" style={{ display: 'block' }}>
+                <div className="top-bar">
+                    <div style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>SFA Proposals</div>
+                    <div className="top-actions">
+                        <button className="icon-btn" onClick={() => setShowProposals(false)}>
+                            <LogOut size={20} style={{ transform: 'rotate(180deg)' }} /> Back to Rules
+                        </button>
+                    </div>
+                </div>
+                <ProposalList user={user} onBack={() => setShowProposals(false)} language={language} />
+            </div>
+        )
+    }
 
     return (
         <div className="app-layout">
@@ -205,14 +324,49 @@ function App() {
                     </div>
 
                     <div className="top-actions">
-                        <button
-                            className={`icon-btn ${isEditor ? 'active-editor-btn' : ''}`}
-                            onClick={() => setIsEditor(!isEditor)}
-                            title={isEditor ? "Exit Edit Mode" : "Enter Member Edit Mode"}
-                            style={{ color: isEditor ? 'var(--color-primary)' : 'inherit' }}
-                        >
-                            {isEditor ? <Edit3 size={20} /> : <User size={20} />}
-                        </button>
+                        {/* Auth / Edit Toggle */}
+                        {user ? (
+                            <>
+                                <button
+                                    className="icon-btn"
+                                    onClick={() => setShowProposals(true)}
+                                    title="View Proposals/Drafts"
+                                    style={{ color: 'var(--color-primary)' }}
+                                >
+                                    <FileText size={20} />
+                                </button>
+
+                                {user.role === 'admin' && (
+                                    <>
+                                        <button
+                                            className={`icon-btn ${isEditor ? 'active-editor-btn' : ''}`}
+                                            onClick={() => setIsEditor(!isEditor)}
+                                            title={isEditor ? "Exit Edit Mode" : "Enter Admin Edit Mode"}
+                                            style={{ color: isEditor ? 'var(--color-primary)' : 'inherit' }}
+                                        >
+                                            <Edit3 size={20} />
+                                        </button>
+                                    </>
+                                )}
+                                <button
+                                    className="icon-btn"
+                                    onClick={handleLogout}
+                                    title={`Logout ${user.userId || user.username} (${user.role})`}
+                                    style={{ color: '#ef4444' }}
+                                >
+                                    <LogOut size={20} />
+                                </button>
+                            </>
+                        ) : (
+                            <button
+                                className="icon-btn"
+                                onClick={() => setShowAuthModal(true)}
+                                title="Member Login"
+                                style={{ width: 'auto', padding: '0 12px', gap: '6px', fontSize: '0.9rem', fontWeight: 600 }}
+                            >
+                                <User size={18} /> Login
+                            </button>
+                        )}
 
                         <button
                             className="icon-btn"
@@ -262,9 +416,16 @@ function App() {
                 existingLevels={[...new Set(lessonsData.map(l => l.level))]}
             />
 
+            <AuthModal
+                isOpen={showAuthModal}
+                onClose={() => setShowAuthModal(false)}
+                onLogin={handleLogin}
+            />
+
             {showSettings && (
                 <SettingsModal
                     settings={settings}
+                    user={user}
                     onSave={(newSettings) => {
                         setSettings(newSettings);
                         localStorage.setItem("sfaReaderSettings", JSON.stringify(newSettings));
@@ -276,11 +437,18 @@ function App() {
                         localStorage.removeItem("sfaReaderSettings");
                         setShowSettings(false);
                     }}
-                    onResetContent={handleResetData}
                 />
             )}
         </div>
     )
 }
 
-export default App
+function AppWrapper() {
+    return (
+        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+            <App />
+        </GoogleOAuthProvider>
+    );
+}
+
+export default AppWrapper;
