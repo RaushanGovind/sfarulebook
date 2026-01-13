@@ -1,0 +1,407 @@
+/* Light Theme (Default) */
+:root {
+    --bg-color: #ffffff;
+    --text-color: #1f2937;
+    --sidebar-bg: #f8fafc;
+    --sidebar-text: #334155;
+    --lesson-link-hover: #e2e8f0;
+    --button-bg: #3b82f6;
+    --button-hover: #2563eb;
+    --top-controls-bg: #f1f5f9;
+}
+
+/* Dark Theme */
+body.dark {
+    --bg-color: #0f172a;
+    --text-color: #f1f5f9;
+    --sidebar-bg: #1e293b;
+    --sidebar-text: #cbd5e1;
+    --lesson-link-hover: #334155;
+    --button-bg: #3b82f6;
+    --button-hover: #2563eb;
+    --top-controls-bg: #1e293b;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: var(--bg-color);
+    color: var(--text-color);
+    transition: background 0.3s, color 0.3s;
+}
+
+.app {
+    display: flex;
+    height: 100vh;
+}
+
+.sidebar {
+    width: 280px;
+    background: var(--sidebar-bg);
+    color: var(--sidebar-text);
+    padding: 15px;
+    overflow-y: auto;
+    transition: width 0.3s ease, background 0.3s, color 0.3s;
+}
+
+.sidebar.hidden {
+    width: 0;
+    padding: 0;
+}
+
+.sidebar h2 {
+    text-align: center;
+    margin-bottom: 15px;
+    color: var(--sidebar-text);
+}
+
+.lesson-link {
+    display: block;
+    padding: 8px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    border-radius: 5px;
+    color: var(--sidebar-text);
+    transition: background 0.3s;
+}
+
+.lesson-link:hover {
+    background: var(--lesson-link-hover);
+}
+
+.content {
+    flex: 1;
+    padding: 25px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+#lesson {
+    flex: 1;
+    padding: 20px 0;
+}
+
+.top-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 15px;
+    padding: 8px 12px;
+    background: var(--top-controls-bg);
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+#toggle-sidebar {
+    margin-bottom: 0;
+    padding: 6px 12px;
+    border: none;
+    background: var(--button-bg);
+    color: white;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 13px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+#toggle-sidebar:hover {
+    background: var(--button-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+#toggle-sidebar:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#toggle-sidebar:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+#toggle-theme {
+    padding: 6px 12px;
+    border: none;
+    background: var(--button-bg);
+    color: white;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 13px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+#toggle-theme:hover {
+    background: var(--button-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+#toggle-theme:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#toggle-theme:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+#settings-btn {
+    padding: 6px 12px;
+    border: none;
+    background: var(--button-bg);
+    color: white;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 13px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+#settings-btn:hover {
+    background: var(--button-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+#settings-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#settings-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+#language-btn {
+    padding: 6px 12px;
+    border: none;
+    background: var(--button-bg);
+    color: white;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 13px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+#language-btn:hover {
+    background: var(--button-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+#language-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+#language-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+.nav-buttons {
+    margin-top: 25px;
+    display: flex;
+    justify-content: space-between; /* left & right */
+    align-items: center;
+    padding: 18px 20px;
+
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 12px;
+
+    position: sticky;
+    bottom: 0;
+    z-index: 100;
+}
+
+.nav-buttons button {
+    min-width: 120px; /* keeps shape stable */
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    color: var(--text-color);
+    padding: 10px 22px;
+    border-radius: 14px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    transition: 0.25s ease;
+}
+
+/* Dark mode */
+body.dark .nav-buttons button {
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    color: #f1f5f9;
+}
+
+/* Light mode */
+body:not(.dark) .nav-buttons button {
+    background: rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    color: #1f2937;
+}
+
+/* Hover */
+.nav-buttons button:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+/* Active */
+.nav-buttons button:active {
+    transform: translateY(0);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
+}
+
+
+
+button {
+    padding: 10px 20px;
+    border: none;
+    background: var(--button-bg);
+    color: white;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    font-size: 14px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+button:hover {
+    background: var(--button-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+button:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 500px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.close {
+    color: var(--text-color);
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: #aaa;
+}
+
+.setting-group {
+    margin-bottom: 15px;
+}
+
+.setting-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.setting-group input[type="color"] {
+    width: 60px;
+    height: 40px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.setting-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: var(--bg-color);
+    color: var(--text-color);
+}
+
+.setting-group input[type="range"] {
+    width: 70%;
+}
+
+#font-size-value {
+    margin-left: 10px;
+}
+
+#save-settings, #reset-settings {
+    margin-top: 20px;
+    margin-right: 10px;
+    display: inline-block;
+}
+
+#save-settings {
+    background: #10b981;
+}
+
+#save-settings:hover {
+    background: #059669;
+}
+
+#reset-settings {
+    background: #ef4444;
+}
+
+#reset-settings:hover {
+    background: #dc2626;
+}
