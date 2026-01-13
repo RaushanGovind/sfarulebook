@@ -11,7 +11,9 @@ import { Menu, Settings, Moon, Sun, Globe, User, Edit3, LogOut, FileText, Users 
 import { GoogleOAuthProvider } from '@react-oauth/google';
 
 // Backend URL
-const API_URL = 'http://127.0.0.1:5000/api';
+const API_URL = process.env.NODE_ENV === 'production'
+    ? 'https://sfa-rules-book.vercel.app/api'
+    : 'http://127.0.0.1:5000/api';
 const GOOGLE_CLIENT_ID = "303925272558-n32fq4gjrd9hr69jhf58jmnc5933su4p.apps.googleusercontent.com";
 
 function App() {

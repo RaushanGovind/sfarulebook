@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { ThumbsUp, CheckCircle, Clock, UploadCloud, ChevronDown, ChevronUp } from 'lucide-react';
 
-const API_URL = 'http://127.0.0.1:5000/api';
+const API_URL = import.meta.env.PROD
+    ? 'https://sfa-rules-book.vercel.app/api'
+    : 'http://127.0.0.1:5000/api';
 
 export default function ProposalList({ user, onBack, language }) {
     const [proposals, setProposals] = useState([]);
