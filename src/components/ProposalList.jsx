@@ -17,9 +17,10 @@ export default function ProposalList({ user, onBack, language }) {
     const fetchProposals = async () => {
         try {
             const token = localStorage.getItem("sfaToken");
-            const res = await fetch(`${API_URL}/proposals`, {
-                headers: { 'x-auth-token': token }
-            });
+            const headers = {};
+            if (token) headers['x-auth-token'] = token;
+
+            const res = await fetch(`${API_URL}/proposals`, { headers });
             const data = await res.json();
             setProposals(data);
         } catch (err) {
@@ -164,24 +165,26 @@ export default function ProposalList({ user, onBack, language }) {
 
 
                                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-                                    {/* Member Consent */}
-                                    <button
-                                        onClick={() => handleConsent(p._id)}
-                                        style={{
-                                            display: 'flex', alignItems: 'center', gap: '6px',
-                                            padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--color-border)',
-                                            background: p.consents.includes(user.id) ? 'var(--color-primary)' : 'transparent',
-                                            color: p.consents.includes(user.id) ? 'white' : 'inherit',
-                                            cursor: 'pointer'
-                                        }}
-                                    >
-                                        <ThumbsUp size={16} />
-                                        {p.consents.includes(user.id) ? 'Consented' : 'Give Consent'}
-                                        ({p.consents.length})
-                                    </button>
+                                    {/* Member Consent - Only if Logged In */}
+                                    {user && (
+                                        <button
+                                            onClick={() => handleConsent(p._id)}
+                                            style={{
+                                                display: 'flex', alignItems: 'center', gap: '6px',
+                                                padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--color-border)',
+                                                background: p.consents.includes(user.id) ? 'var(--color-primary)' : 'transparent',
+                                                color: p.consents.includes(user.id) ? 'white' : 'inherit',
+                                                cursor: 'pointer'
+                                            }}
+                                        >
+                                            <ThumbsUp size={16} />
+                                            {p.consents.includes(user.id) ? 'Consented' : 'Give Consent'}
+                                            ({p.consents.length})
+                                        </button>
+                                    )}
 
                                     {/* Admin Approve */}
-                                    {user.role === 'admin' && !isReadyToPublish && (
+                                    {user?.role === 'admin' && !isReadyToPublish && (
                                         <button
                                             onClick={() => handleApprove(p._id)}
                                             style={{
@@ -200,7 +203,7 @@ export default function ProposalList({ user, onBack, language }) {
                                     )}
 
                                     {/* Admin Publish (Only if Ready) */}
-                                    {user.role === 'admin' && isReadyToPublish && (
+                                    {user?.role === 'admin' && isReadyToPublish && (
                                         <button
                                             onClick={() => handlePublish(p._id)}
                                             style={{

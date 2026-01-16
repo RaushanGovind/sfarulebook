@@ -6,6 +6,8 @@ export default defineConfig({
     base: './',
     server: {
         port: 5173,
-        strictPort: true, // Fail if 5173 is busy, don't switch to 5174
+        strictPort: false, // Allow fallback to next available port (e.g., 5174)
+        host: true, // Expose to network
+        open: true, // Auto-open browser
     }
 })

@@ -1,53 +1,43 @@
 import React, { useState } from 'react';
-import { X, User, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
-import { GoogleLogin } from '@react-oauth/google';
+import { X, User, Lock, ArrowRight, Eye, EyeOff, MapPin, FileText, BadgeCheck } from 'lucide-react';
+// GoogleLogin removed as per request
 
-const API_URL = 'http://127.0.0.1:5000'; // Moved API_URL here for consistency
+const API_URL = import.meta.env.PROD
+    ? 'https://sfa-rules-book.vercel.app'
+    : 'http://127.0.0.1:5000';
+
+// ...
 
 export default function AuthModal({ isOpen, onClose, onLogin }) {
-    const [isRegistering, setIsRegistering] = useState(false); // Renamed from isLogin to isRegistering for clarity
-    const [formData, setFormData] = useState({ username: '', password: '' });
+    const [isRegistering, setIsRegistering] = useState(false);
+    const [formData, setFormData] = useState({
+        username: '',
+        password: '',
+        confirmPassword: '',
+        fullName: '',
+        headquarter: '',
+        cmsId: '',
+        sfaId: ''
+    });
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
     if (!isOpen) return null;
 
-    const handleGoogleSuccess = async (credentialResponse) => {
-        setLoading(true);
-        setError('');
-        try {
-            const res = await fetch(`${API_URL}/api/auth/google`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: credentialResponse.credential })
-            });
-            const data = await res.json();
-            if (res.ok) {
-                onLogin(data);
-                onClose();
-            } else {
-                setError(data.message || "Google Login Failed");
-            }
-        } catch (err) {
-            console.error("Google login error:", err);
-            setError("Network Error or server issue during Google login.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleGoogleError = () => {
-        setError("Google Login Failed");
-    };
-
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
+        if (isRegistering && formData.password !== formData.confirmPassword) {
+            setError("Passwords do not match!");
+            return;
+        }
+
         setLoading(true);
 
         const endpoint = isRegistering ? '/api/auth/register' : '/api/auth/login';
-        const url = `http://127.0.0.1:5000${endpoint}`;
+        const url = `${API_URL}${endpoint}`;
 
         try {
             const res = await fetch(url, {
@@ -97,16 +87,7 @@ export default function AuthModal({ isOpen, onClose, onLogin }) {
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-                    {/* Google Login */}
-                    <div style={{ paddingBottom: '16px', borderBottom: '1px solid var(--color-border)', marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
-                        <GoogleLogin
-                            onSuccess={handleGoogleSuccess}
-                            onError={handleGoogleError}
-                            theme="outline"
-                            size="large"
-                            width="250"
-                        />
-                    </div>
+                    {/* Google Login Removed */}
 
                     {error && (
                         <div style={{
@@ -153,6 +134,71 @@ export default function AuthModal({ isOpen, onClose, onLogin }) {
                             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
                     </div>
+
+                    {isRegistering && (
+                        <>
+                            <div style={{ position: 'relative' }}>
+                                <User size={18} style={{ position: 'absolute', top: '10px', left: '12px', color: 'var(--color-text-muted)' }} />
+                                <input
+                                    type="text"
+                                    placeholder="Full Name"
+                                    style={{ paddingLeft: '38px' }}
+                                    className="search-input"
+                                    value={formData.fullName}
+                                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                                />
+                            </div>
+
+                            <div style={{ position: 'relative' }}>
+                                <Lock size={18} style={{ position: 'absolute', top: '10px', left: '12px', color: 'var(--color-text-muted)' }} />
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="Confirm Password"
+                                    style={{ paddingLeft: '38px' }}
+                                    className="search-input"
+                                    value={formData.confirmPassword}
+                                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                                    required
+                                />
+                            </div>
+
+                            <div style={{ position: 'relative' }}>
+                                <MapPin size={18} style={{ position: 'absolute', top: '10px', left: '12px', color: 'var(--color-text-muted)' }} />
+                                <input
+                                    type="text"
+                                    placeholder="Headquarter"
+                                    style={{ paddingLeft: '38px' }}
+                                    className="search-input"
+                                    value={formData.headquarter}
+                                    onChange={(e) => setFormData({ ...formData, headquarter: e.target.value })}
+                                />
+                            </div>
+
+                            <div style={{ position: 'relative' }}>
+                                <FileText size={18} style={{ position: 'absolute', top: '10px', left: '12px', color: 'var(--color-text-muted)' }} />
+                                <input
+                                    type="text"
+                                    placeholder="CMS ID (e.g., ABC1234)"
+                                    style={{ paddingLeft: '38px' }}
+                                    className="search-input"
+                                    value={formData.cmsId}
+                                    onChange={(e) => setFormData({ ...formData, cmsId: e.target.value.toUpperCase() })}
+                                />
+                            </div>
+
+                            <div style={{ position: 'relative' }}>
+                                <BadgeCheck size={18} style={{ position: 'absolute', top: '10px', left: '12px', color: 'var(--color-text-muted)' }} />
+                                <input
+                                    type="text"
+                                    placeholder="SFA ID (e.g., SFA1234)"
+                                    style={{ paddingLeft: '38px' }}
+                                    className="search-input"
+                                    value={formData.sfaId}
+                                    onChange={(e) => setFormData({ ...formData, sfaId: e.target.value.toUpperCase() })}
+                                />
+                            </div>
+                        </>
+                    )}
 
                     <button
                         type="submit"

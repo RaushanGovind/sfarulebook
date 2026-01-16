@@ -49,8 +49,20 @@ app.get('/', (req, res) => res.send('API Running'));
 // --- AUTH ---
 app.post('/api/auth/register', async (req, res) => {
     try {
-        const { username, password } = req.body;
+        const { username, password, fullName, headquarter, cmsId, sfaId } = req.body;
         if (await User.findOne({ username })) return res.status(400).json({ message: 'User exists' });
+
+        // Validate CMS ID (ABC1234 or ABCD1234)
+        if (cmsId && !/^[A-Z]{3,4}\d{4}$/.test(cmsId)) {
+            return res.status(400).json({ message: 'Invalid CMS ID format (e.g., ABC1234 or ABCD1234)' });
+        }
+        if (cmsId && await User.findOne({ cmsId })) return res.status(400).json({ message: 'CMS ID already registered' });
+
+        // Validate SFA ID (SFA1234)
+        if (sfaId && !/^SFA\d{4}$/.test(sfaId)) {
+            return res.status(400).json({ message: 'Invalid SFA ID format (e.g., SFA1234)' });
+        }
+        if (sfaId && await User.findOne({ sfaId })) return res.status(400).json({ message: 'SFA ID already registered' });
 
         const salt = await bcrypt.genSalt(10);
         const hashedPassword = await bcrypt.hash(password, salt);
@@ -59,7 +71,16 @@ app.post('/api/auth/register', async (req, res) => {
         const role = count === 0 ? 'admin' : 'member';
         const userId = `SFARB${String(count + 1).padStart(2, '0')}`; // SFARB01, SFARB02, etc.
 
-        const user = new User({ userId, username, password: hashedPassword, role });
+        const user = new User({
+            userId,
+            username,
+            password: hashedPassword,
+            role,
+            fullName,
+            headquarter,
+            cmsId,
+            sfaId
+        });
         await user.save();
 
         res.status(201).json({ message: 'User registered', userId });
@@ -79,6 +100,16 @@ app.post('/api/auth/login', async (req, res) => {
 
         const token = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
         res.json({ token, user: { id: user._id, userId: user.userId, username: user.username, role: user.role } });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- PUBLIC MEMBERS ---
+app.get('/api/public/members', async (req, res) => {
+    try {
+        const users = await User.find({}, 'fullName username userId headquarter createdAt').sort({ createdAt: -1 });
+        res.json(users);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -109,12 +140,6 @@ app.put('/api/users/:id/role', auth, checkAdmin, async (req, res) => {
     }
 });
 
-const { OAuth2Client } = require('google-auth-library');
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const client = new OAuth2Client(GOOGLE_CLIENT_ID);
-
-// ... (previous code) ...
-
 // CHANGE PASSWORD
 app.post('/api/auth/password', auth, async (req, res) => {
     try {
@@ -136,38 +161,8 @@ app.post('/api/auth/password', auth, async (req, res) => {
     }
 });
 
-// GOOGLE LOGIN
-app.post('/api/auth/google', async (req, res) => {
-    const { token } = req.body;
-    try {
-        const ticket = await client.verifyIdToken({
-            idToken: token,
-            audience: GOOGLE_CLIENT_ID,
-        });
-        const { name, email, picture } = ticket.getPayload();
-
-        let user = await User.findOne({ username: email }); // Use email as username
-        if (!user) {
-            const count = await User.countDocuments();
-            const role = count === 0 ? 'admin' : 'member';
-            const userId = `SFARB${String(count + 1).padStart(2, '0')}`; // SFARB01, SFARB02, etc.
-            // Create new user
-            user = new User({
-                userId,
-                username: email,
-                role
-                // no password
-            });
-            await user.save();
-        }
-
-        const jwtToken = jwt.sign({ id: user._id, role: user.role }, JWT_SECRET, { expiresIn: '1d' });
-        res.json({ token: jwtToken, user: { id: user._id, userId: user.userId, username: user.username, role: user.role, picture } });
-
-    } catch (err) {
-        res.status(400).json({ error: 'Google Login Failed' });
-    }
-});
+// Google Login Removed as per request
+// app.post('/api/auth/google', ... );
 
 // PROMOTE TO ADMIN (Legacy/Script usage)
 app.post('/api/auth/promote', async (req, res) => {
@@ -204,9 +199,10 @@ app.post('/api/proposals', auth, checkAdmin, async (req, res) => {
 });
 
 // Get All Proposals (Visible to all Members)
-app.get('/api/proposals', auth, async (req, res) => {
+// Get Active Proposals (Public: Drafts & Approved)
+app.get('/api/proposals', async (req, res) => {
     try {
-        const proposals = await Proposal.find()
+        const proposals = await Proposal.find({ status: { $in: ['draft', 'approved'] } })
             .populate('author', 'username userId')
             .sort({ createdAt: -1 });
         res.json(proposals);

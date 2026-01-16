@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { arrayMove } from '@dnd-kit/sortable'
+import { Menu, LogOut, FileText, Edit3, User, Moon, Sun, Globe, Settings } from 'lucide-react'
 import { lessons as initialLessons } from './data'
 import Sidebar from './components/Sidebar'
 import Content from './components/Content'
@@ -7,14 +8,13 @@ import SettingsModal from './components/SettingsModal'
 import AddLessonModal from './components/AddLessonModal'
 import AuthModal from './components/AuthModal'
 import ProposalList from './components/ProposalList'
-import { Menu, Settings, Moon, Sun, Globe, User, Edit3, LogOut, FileText, Users } from 'lucide-react'
-import { GoogleOAuthProvider } from '@react-oauth/google';
+import LandingPage from './components/LandingPage'
 
 // Backend URL
 const API_URL = process.env.NODE_ENV === 'production'
     ? 'https://sfa-rules-book.vercel.app/api'
     : 'http://127.0.0.1:5000/api';
-const GOOGLE_CLIENT_ID = "303925272558-n32fq4gjrd9hr69jhf58jmnc5933su4p.apps.googleusercontent.com";
+// const GOOGLE_CLIENT_ID = ...; // Removed
 
 function App() {
     // Auth State
@@ -24,6 +24,11 @@ function App() {
     });
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [showUserModal, setShowUserModal] = useState(false);
+
+    // Landing Page State - Show if not logged in initially? 
+    // Or just show always until "Enter" is clicked.
+    // Let's default to TRUE if no user, FALSE if user exists (auto-login)
+    const [showLanding, setShowLanding] = useState(!user);
 
     // Data State
     const [lessonsData, setLessonsData] = useState([]);
@@ -46,12 +51,12 @@ function App() {
 
     // Settings state (Font, Colors)
     const defaultSettings = {
-        bgColor: "#ffffff",
-        textColor: "#334155",
-        sidebarBg: "#ffffff",
-        sidebarText: "#334155",
-        fontFamily: "'Inter', 'Noto Sans Devanagari', sans-serif",
-        fontSize: 16
+        bgColor: "#fdfbf7", // Parchment
+        textColor: "#1c1917", // Warm Black
+        sidebarBg: "#f5f5f4", // Stone 100
+        sidebarText: "#1c1917",
+        fontFamily: "'Merriweather', 'Georgia', serif", // Serif for constitution look
+        fontSize: 18 // Slightly larger for readability
     };
 
     const [settings, setSettings] = useState(() => {
@@ -136,6 +141,7 @@ function App() {
         localStorage.setItem("sfaUser", JSON.stringify(authData.user));
         // Also store token if needed for authenticated requests
         localStorage.setItem("sfaToken", authData.token);
+        setShowLanding(false); // Enter app on login
     };
 
     const handleLogout = () => {
@@ -144,6 +150,7 @@ function App() {
         setShowProposals(false);
         localStorage.removeItem("sfaUser");
         localStorage.removeItem("sfaToken");
+        setShowLanding(true); // Return to landing
     };
 
     const handleNext = () => {
@@ -279,6 +286,28 @@ function App() {
         color: settings.sidebarText
     } : {};
 
+    if (showLanding) {
+        return (
+            <>
+                <LandingPage
+                    onEnter={() => setShowLanding(false)}
+                    onLogin={() => {
+                        setShowLanding(false); // Go to app
+                        setShowAuthModal(true); // Open modal immediately
+                    }}
+                />
+                <AuthModal
+                    isOpen={showAuthModal}
+                    onClose={() => {
+                        setShowAuthModal(false);
+                        if (!user) setShowLanding(true); // If cancelled and no user, go back to landing
+                    }}
+                    onLogin={handleLogin}
+                />
+            </>
+        )
+    }
+
     if (loading) return <div className="app-layout" style={{ justifyContent: 'center', alignItems: 'center' }}>Loading Rules...</div>;
 
     if (showProposals) {
@@ -323,21 +352,30 @@ function App() {
                         >
                             <Menu />
                         </button>
+
+                        {/* If no sidebar on desktop (small screen), maybe show title? */}
+                        <div className="md:hidden" style={{ fontWeight: 'bold' }}>SFA Rules</div>
                     </div>
 
                     <div className="top-actions">
+                        {/* Only show Proposal Button to Logged In Users? Or maybe keep it public but read-only? 
+                           User asked: "OUTSIDE THE USER LOGIN .. ONLY SHOW ACTIVE RULE"
+                           So we should HIDE proposals for non-logged in users.
+                        */}
+                        {user && (
+                            <button
+                                className="icon-btn"
+                                onClick={() => setShowProposals(true)}
+                                title="View Proposals/Drafts"
+                                style={{ color: 'var(--color-primary)' }}
+                            >
+                                <FileText size={20} />
+                            </button>
+                        )}
+
                         {/* Auth / Edit Toggle */}
                         {user ? (
                             <>
-                                <button
-                                    className="icon-btn"
-                                    onClick={() => setShowProposals(true)}
-                                    title="View Proposals/Drafts"
-                                    style={{ color: 'var(--color-primary)' }}
-                                >
-                                    <FileText size={20} />
-                                </button>
-
                                 {user.role === 'admin' && (
                                     <>
                                         <button
@@ -447,9 +485,7 @@ function App() {
 
 function AppWrapper() {
     return (
-        <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
-            <App />
-        </GoogleOAuthProvider>
+        <App />
     );
 }
 
