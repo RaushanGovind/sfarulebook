@@ -47,7 +47,7 @@ function App() {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Mobile sidebar state
 
     // Theme state
-    const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem("darkMode") === "1");
+    const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem("sfaDarkMode_v2") === "1");
 
     // Settings state (Font, Colors)
     const defaultSettings = {
@@ -60,7 +60,7 @@ function App() {
     };
 
     const [settings, setSettings] = useState(() => {
-        const saved = localStorage.getItem("sfaReaderSettings");
+        const saved = localStorage.getItem("sfaReaderSettings_v2");
         return saved ? JSON.parse(saved) : defaultSettings;
     });
 
@@ -114,7 +114,7 @@ function App() {
         } else {
             document.body.classList.remove('dark');
         }
-        localStorage.setItem("darkMode", isDarkMode ? "1" : "0");
+        localStorage.setItem("sfaDarkMode_v2", isDarkMode ? "1" : "0");
     }, [isDarkMode]);
 
     // Apply visual settings
@@ -468,13 +468,13 @@ function App() {
                     user={user}
                     onSave={(newSettings) => {
                         setSettings(newSettings);
-                        localStorage.setItem("sfaReaderSettings", JSON.stringify(newSettings));
+                        localStorage.setItem("sfaReaderSettings_v2", JSON.stringify(newSettings));
                         setShowSettings(false);
                     }}
                     onClose={() => setShowSettings(false)}
                     onReset={() => {
                         setSettings(defaultSettings);
-                        localStorage.removeItem("sfaReaderSettings");
+                        localStorage.removeItem("sfaReaderSettings_v2");
                         setShowSettings(false);
                     }}
                 />
