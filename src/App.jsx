@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { arrayMove } from '@dnd-kit/sortable'
-import { Menu, LogOut, FileText, Edit3, User, Moon, Sun, Globe, Settings } from 'lucide-react'
+import { Menu, LogOut, FileText, Edit3, User, Moon, Sun, Globe, Settings, Users } from 'lucide-react'
 import { lessons as initialLessons } from './data'
 import Sidebar from './components/Sidebar'
 import Content from './components/Content'
@@ -9,11 +9,12 @@ import AddLessonModal from './components/AddLessonModal'
 import AuthModal from './components/AuthModal'
 import ProposalList from './components/ProposalList'
 import LandingPage from './components/LandingPage'
+import MemberDirectoryModal from './components/MemberDirectoryModal'
 
 // Backend URL
-const API_URL = process.env.NODE_ENV === 'production'
+const API_URL = import.meta.env.PROD
     ? 'https://sfa-rules-book.vercel.app/api'
-    : 'http://127.0.0.1:5000/api';
+    : 'http://127.0.0.1:5001/api';
 // const GOOGLE_CLIENT_ID = ...; // Removed
 
 function App() {
@@ -24,6 +25,7 @@ function App() {
     });
     const [showAuthModal, setShowAuthModal] = useState(false);
     const [showUserModal, setShowUserModal] = useState(false);
+    const [showMemberDirectory, setShowMemberDirectory] = useState(false);
 
     // Landing Page State - Show if not logged in initially? 
     // Or just show always until "Enter" is clicked.
@@ -290,11 +292,10 @@ function App() {
         return (
             <>
                 <LandingPage
-                    onEnter={() => setShowLanding(false)}
-                    onLogin={() => {
-                        setShowLanding(false); // Go to app
-                        setShowAuthModal(true); // Open modal immediately
-                    }}
+                    onEnter={() => setShowAuthModal(true)}
+                    onLogin={() => setShowAuthModal(true)}
+                    language={language}
+                    onLanguageToggle={() => setLanguage(l => l === 'en' ? 'hi' : 'en')}
                 />
                 <AuthModal
                     isOpen={showAuthModal}
@@ -370,6 +371,16 @@ function App() {
                                 style={{ color: 'var(--color-primary)' }}
                             >
                                 <FileText size={20} />
+                            </button>
+                        )}
+
+                        {user && (
+                            <button
+                                className="icon-btn"
+                                onClick={() => setShowMemberDirectory(true)}
+                                title="Member Directory"
+                            >
+                                <Users size={20} />
                             </button>
                         )}
 
@@ -479,6 +490,11 @@ function App() {
                     }}
                 />
             )}
+
+            <MemberDirectoryModal
+                isOpen={showMemberDirectory}
+                onClose={() => setShowMemberDirectory(false)}
+            />
         </div>
     )
 }

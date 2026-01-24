@@ -1,31 +1,26 @@
 import React, { useEffect, useState } from 'react';
-import { BookOpen, User, ArrowRight, Activity, Users } from 'lucide-react';
+import { BookOpen, User, ArrowRight, Activity, Users, Globe } from 'lucide-react';
 
-export default function LandingPage({ onEnter, onLogin }) {
-    const [members, setMembers] = useState([]);
-    const [loading, setLoading] = useState(true);
+export default function LandingPage({ onEnter, onLogin, language, onLanguageToggle }) {
+    const isHindi = language === 'hi';
 
-    const API_URL = import.meta.env.PROD
-        ? 'https://sfa-rules-book.vercel.app/api'
-        : 'http://127.0.0.1:5000/api';
-
-    useEffect(() => {
-        const fetchMembers = async () => {
-            try {
-                const res = await fetch(`${API_URL}/public/members`);
-                if (res.ok) {
-                    const data = await res.json();
-                    setMembers(data);
-                }
-            } catch (error) {
-                console.error("Failed to load members", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchMembers();
-    }, [API_URL]);
+    const content = {
+        title: isHindi ? 'नियमों में महारत हासिल करें।' : 'Master the Rules.',
+        subtitle: isHindi ? 'सुरक्षा के साथ नेतृत्व करें।' : 'Lead with Safety.',
+        description: isHindi
+            ? 'आधिकारिक डिजिटल SFA नियम पुस्तिका। सक्रिय ब्राउज़ करें, वास्तविक समय के संशोधनों के साथ अपडेट रहें, और अनुमोदित सुरक्षा प्रोटोकॉल तक तुरंत पहुंचें।'
+            : 'The official digital SFA Rules Book. Browse active rules, stay updated with real-time amendments, and access approved safety protocols instantly.',
+        browseBtn: isHindi ? 'सक्रिय नियम ब्राउज़ करें' : 'Browse Active Rules',
+        loginBtn: isHindi ? 'सदस्य लॉगिन' : 'Member Login',
+        feat1Title: isHindi ? 'हमेशा सक्रिय' : 'Always Active',
+        feat1Desc: isHindi ? 'केवल वर्तमान, अनुमोदित नियमों तक पहुंचें। पुराने ड्राफ्ट के साथ कोई भ्रम नहीं।' : 'Access only current, approved rules. No confusion with obsolete drafts.',
+        feat2Title: isHindi ? 'समुदाय संचालित' : 'Community Driven',
+        feat2Desc: isHindi ? 'हमारे समर्पित सदस्य आधार से आम सहमति से अनुमोदित नियम।' : 'Rules approved by consensus from our dedicated member base.',
+        privacyTitle: isHindi ? 'सदस्य निर्देशिका निजी है' : 'Member Directory is Private',
+        privacyDesc: isHindi
+            ? 'हमारे समुदाय की सुरक्षा के लिए, पंजीकृत सदस्यों की सूची और सक्रिय नियम केवल लॉग-इन सदस्यों को ही दिखाई देते हैं।'
+            : 'To protect our community, the list of registered members and active rules are only visible to logged-in members.'
+    };
 
     return (
         <div style={{
@@ -37,22 +32,29 @@ export default function LandingPage({ onEnter, onLogin }) {
             {/* Header / Hero */}
             <header style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                padding: '24px 40px', background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)',
+                padding: '16px 40px', background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(10px)',
                 position: 'fixed', width: '100%', top: 0, zIndex: 10, borderBottom: '1px solid rgba(0,0,0,0.05)'
             }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontWeight: 'bold', fontSize: '1.4rem' }}>
-                    <BookOpen size={28} color="#2563eb" />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontWeight: 'bold', fontSize: '1.2rem' }}>
+                    <BookOpen size={24} color="#2563eb" />
                     <span style={{ background: 'linear-gradient(to right, #2563eb, #1e40af)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                         SFA Rules Book
                     </span>
                 </div>
-                <div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                    <button
+                        onClick={onLanguageToggle}
+                        className="landing-btn-secondary"
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                    >
+                        <Globe size={18} /> {language.toUpperCase()}
+                    </button>
                     <button
                         onClick={onLogin}
                         className="landing-btn-secondary"
                         style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
                     >
-                        <User size={18} /> Member Login
+                        <User size={18} /> {content.loginBtn}
                     </button>
                 </div>
             </header>
@@ -64,11 +66,11 @@ export default function LandingPage({ onEnter, onLogin }) {
             }}>
                 <div style={{ maxWidth: '800px', marginBottom: '60px' }}>
                     <h1 style={{ fontSize: '3.5rem', fontWeight: 800, marginBottom: '24px', lineHeight: 1.1, color: '#0f172a' }}>
-                        Master the Rules. <br />
-                        <span style={{ color: '#2563eb' }}>Lead with Safety.</span>
+                        {content.title} <br />
+                        <span style={{ color: '#2563eb' }}>{content.subtitle}</span>
                     </h1>
                     <p style={{ fontSize: '1.25rem', color: '#64748b', marginBottom: '40px', lineHeight: 1.6 }}>
-                        The official digital SFA Rules Book. Browse active rules, stay updated with real-time amendments, and access approved safety protocols instantly.
+                        {content.description}
                     </p>
 
                     <button
@@ -76,7 +78,7 @@ export default function LandingPage({ onEnter, onLogin }) {
                         className="landing-btn-primary"
                         style={{ fontSize: '1.2rem', padding: '16px 40px' }}
                     >
-                        Browse Active Rules <ArrowRight size={20} />
+                        {content.browseBtn} <ArrowRight size={20} />
                     </button>
                 </div>
 
@@ -87,42 +89,23 @@ export default function LandingPage({ onEnter, onLogin }) {
                 }}>
                     <div className="feature-card">
                         <div className="icon-wrapper"><Activity size={32} /></div>
-                        <h3>Always Active</h3>
-                        <p>Access only current, approved rules. No confusion with obsolete drafts.</p>
+                        <h3>{content.feat1Title}</h3>
+                        <p>{content.feat1Desc}</p>
                     </div>
                     <div className="feature-card">
                         <div className="icon-wrapper"><Users size={32} /></div>
-                        <h3>Community Driven</h3>
-                        <p>Rules approved by consensus from our dedicated member base.</p>
+                        <h3>{content.feat2Title}</h3>
+                        <p>{content.feat2Desc}</p>
                     </div>
                 </div>
 
-                {/* Registered Members Ticker / List */}
-                <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto' }}>
-                    <h2 style={{ fontSize: '1.8rem', marginBottom: '30px', fontWeight: 700 }}>Our Registered Members</h2>
-
-                    {loading ? (
-                        <div style={{ color: '#94a3b8' }}>Loading directory...</div>
-                    ) : members.length > 0 ? (
-                        <div className="members-grid">
-                            {members.map((m) => (
-                                <div key={m.userId} className="member-card">
-                                    <div className="member-avatar">
-                                        {m.fullName ? m.fullName[0].toUpperCase() : (m.username ? m.username[0].toUpperCase() : '?')}
-                                    </div>
-                                    <div className="member-info">
-                                        <div className="member-name">{m.fullName || m.username || 'Member'}</div>
-                                        <div className="member-meta">
-                                            <span>{m.userId}</span> •
-                                            <span>{m.headquarter || 'HQ N/A'}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div style={{ color: '#94a3b8' }}>No members registered yet.</div>
-                    )}
+                {/* Registered Members Section Removed from Public View as requested */}
+                <div style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', opacity: 0.8 }}>
+                    <div style={{ padding: '40px', background: 'white', borderRadius: '20px', border: '1px dashed #cbd5e1' }}>
+                        <Users size={48} color="#94a3b8" style={{ marginBottom: '16px' }} />
+                        <h2 style={{ fontSize: '1.5rem', marginBottom: '10px' }}>{content.privacyTitle}</h2>
+                        <p style={{ color: '#64748b' }}>{content.privacyDesc}</p>
+                    </div>
                 </div>
 
             </main>
@@ -162,28 +145,9 @@ export default function LandingPage({ onEnter, onLogin }) {
                     border-radius: 16px; display: flex; align-items: center; justifyContent: center;
                 }
 
-                .members-grid {
-                    display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-                    gap: 16px;
-                }
-                .member-card {
-                    background: white; padding: 16px; border-radius: 12px;
-                    box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #f1f5f9;
-                    display: flex; align-items: center; gap: 12px; transition: transform 0.2s;
-                }
-                .member-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-                .member-avatar {
-                    width: 40px; height: 40px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-                    color: white; border-radius: 50%; display: flex; align-items: center; justifyContent: center;
-                    font-weight: 700; font-size: 1.1rem; flex-shrink: 0;
-                }
-                .member-info { text-align: left; overflow: hidden; }
-                .member-name { font-weight: 600; color: #334155; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-                .member-meta { font-size: 0.8rem; color: #94a3b8; margin-top: 2px; }
-
                 @media (max-width: 640px) {
                     h1 { font-size: 2.5rem !important; }
-                    .header { padding: 16px 20px !important; }
+                    header { padding: 16px 20px !important; }
                 }
             `}</style>
         </div>

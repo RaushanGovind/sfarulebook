@@ -3,7 +3,7 @@ import { ThumbsUp, CheckCircle, Clock, UploadCloud, ChevronDown, ChevronUp } fro
 
 const API_URL = import.meta.env.PROD
     ? 'https://sfa-rules-book.vercel.app/api'
-    : 'http://127.0.0.1:5000/api';
+    : 'http://127.0.0.1:5001/api';
 
 export default function ProposalList({ user, onBack, language }) {
     const [proposals, setProposals] = useState([]);

@@ -5,8 +5,8 @@ export default defineConfig({
     plugins: [react()],
     base: './',
     server: {
-        port: 5173,
-        strictPort: false, // Allow fallback to next available port (e.g., 5174)
+        port: 5176,
+        strictPort: true, // Force this port
         host: true, // Expose to network
         open: true, // Auto-open browser
     }

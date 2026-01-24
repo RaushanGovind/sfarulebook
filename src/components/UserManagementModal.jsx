@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { User, Shield, Check, X } from 'lucide-react';
 
-const API_URL = 'http://127.0.0.1:5000/api';
+const API_URL = import.meta.env.PROD
+    ? 'https://sfa-rules-book.vercel.app/api'
+    : 'http://127.0.0.1:5001/api';
 
 export default function UserManagementModal({ isOpen, onClose, currentUser }) {
     const [users, setUsers] = useState([]);

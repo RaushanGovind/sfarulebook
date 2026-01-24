@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, User, Shield, Monitor } from 'lucide-react';
 
-const API_URL = 'http://127.0.0.1:5000/api';
+const API_URL = 'http://127.0.0.1:5001/api';
 
 export default function SettingsModal({ settings, onSave, onClose, onReset, onResetContent, user }) {
     const [localSettings, setLocalSettings] = useState(settings);
