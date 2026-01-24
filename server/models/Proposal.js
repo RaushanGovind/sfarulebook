@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const ProposalSchema = new mongoose.Schema({
     originalLessonId: { type: mongoose.Schema.Types.ObjectId, ref: 'Lesson', default: null }, // Null if new lesson
@@ -26,4 +26,4 @@ const ProposalSchema = new mongoose.Schema({
     adminCountAtCreation: { type: Number, default: 1 } // To calculate percentage if needed
 }, { timestamps: true });
 
-module.exports = mongoose.model('Proposal', ProposalSchema);
+export default mongoose.model('Proposal', ProposalSchema);

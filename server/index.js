@@ -1,16 +1,17 @@
-require('dotenv').config({ path: './server/.env' });
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const morgan = require('morgan');
-const Lesson = require('./models/Lesson');
-const User = require('./models/User');
-const Proposal = require('./models/Proposal');
+import dotenv from 'dotenv';
+dotenv.config({ path: './server/.env' });
+import express from 'express';
+import mongoose from 'mongoose';
+import cors from 'cors';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import morgan from 'morgan';
+import Lesson from './models/Lesson.js';
+import User from './models/User.js';
+import Proposal from './models/Proposal.js';
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 const JWT_SECRET = process.env.JWT_SECRET || 'sfa_secret_key_123';
 const MASTER_SECRET = process.env.MASTER_SECRET || 'sfa_master_2026';
 
@@ -338,4 +339,4 @@ if (process.env.VERCEL !== '1') {
 }
 
 // Export for Vercel serverless
-module.exports = app;
+export default app;

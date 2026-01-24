@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const LessonSchema = new mongoose.Schema({
     level: { type: String, required: true },
@@ -25,4 +25,4 @@ const LessonSchema = new mongoose.Schema({
     }]
 }, { timestamps: true });
 
-module.exports = mongoose.model('Lesson', LessonSchema);
+export default mongoose.model('Lesson', LessonSchema);

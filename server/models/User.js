@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const UserSchema = new mongoose.Schema({
     userId: { type: String, required: true, unique: true }, // SFARB01, SFARB02, etc. (Internal System ID)
@@ -11,4 +11,4 @@ const UserSchema = new mongoose.Schema({
     role: { type: String, default: 'member' } // 'admin' or 'member'
 }, { timestamps: true });
 
-module.exports = mongoose.model('User', UserSchema);
+export default mongoose.model('User', UserSchema);
