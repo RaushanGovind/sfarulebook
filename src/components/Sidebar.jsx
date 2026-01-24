@@ -7,6 +7,35 @@ import { SortableItem } from './SortableItem';
 export default function Sidebar({ lessons, currentIndex, onSelect, isOpen, onCloseMobile, language, customStyle, isEditor, onDelete, onAdd, onReorder }) {
     const activeRef = useRef(null);
     const [searchTerm, setSearchTerm] = useState('');
+    const [width, setWidth] = useState(280);
+    const [isResizing, setIsResizing] = useState(false);
+
+    // Resize Logic
+    useEffect(() => {
+        const handleMouseMove = (e) => {
+            if (!isResizing) return;
+            const newWidth = e.clientX;
+            if (newWidth > 200 && newWidth < 600) {
+                setWidth(newWidth);
+            }
+        };
+
+        const handleMouseUp = () => {
+            setIsResizing(false);
+            document.body.style.cursor = 'default';
+        };
+
+        if (isResizing) {
+            window.addEventListener('mousemove', handleMouseMove);
+            window.addEventListener('mouseup', handleMouseUp);
+            document.body.style.cursor = 'col-resize';
+        }
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [isResizing]);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -62,8 +91,27 @@ export default function Sidebar({ lessons, currentIndex, onSelect, isOpen, onClo
 
             <aside
                 className={`sidebar ${isOpen ? 'mobile-open' : ''}`}
-                style={customStyle}
+                style={{ ...customStyle, width: isOpen ? undefined : `${width}px` }}
             >
+                {/* Drag Handle */}
+                <div
+                    onMouseDown={(e) => {
+                        e.preventDefault();
+                        setIsResizing(true);
+                    }}
+                    style={{
+                        position: 'absolute',
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: '6px',
+                        cursor: 'col-resize',
+                        zIndex: 100,
+                        background: 'transparent',
+                        ':hover': { background: 'rgba(0,0,0,0.1)' } // Hover effect usually needs CSS class or state, simple transparent is functional
+                    }}
+                    title="Drag to resize"
+                />
                 <div className="sidebar-header">
                     <h2>📘 SFA Rules</h2>
                 </div>
