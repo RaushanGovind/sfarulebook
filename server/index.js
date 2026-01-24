@@ -201,12 +201,71 @@ app.post('/api/proposals', auth, checkAdmin, async (req, res) => {
 
 // Get All Proposals (Visible to all Members)
 // Get Active Proposals (Public: Drafts & Approved)
+// Get Proposals (Role Based Access)
 app.get('/api/proposals', async (req, res) => {
     try {
-        const proposals = await Proposal.find({ status: { $in: ['draft', 'approved'] } })
+        const token = req.header('x-auth-token');
+        let isAdmin = false;
+
+        if (token) {
+            try {
+                const decoded = jwt.verify(token, JWT_SECRET);
+                const user = await User.findById(decoded.id);
+                if (user && user.role === 'admin') isAdmin = true;
+            } catch (e) {
+                // Ignore invalid token, treat as guest
+            }
+        }
+
+        const query = isAdmin
+            ? {} // Admins see all (draft, open, approved, etc)
+            : { status: { $in: ['open', 'approved'] } }; // Public/Members see only active voting items
+
+        const proposals = await Proposal.find(query)
             .populate('author', 'username userId')
             .sort({ createdAt: -1 });
         res.json(proposals);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Admin: Open Proposal for Voting
+app.put('/api/proposals/:id/open', auth, checkAdmin, async (req, res) => {
+    try {
+        const proposal = await Proposal.findById(req.params.id);
+        if (!proposal) return res.status(404).json({ message: 'Not found' });
+
+        // Reset voting when opening/re-opening
+        proposal.status = 'open';
+        proposal.consents = []; // Reset votes
+        proposal.approvals = [req.user.id]; // Auto-approve by the opener
+
+        await proposal.save();
+        res.json(proposal);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Admin: Withdraw Proposal (Back to Draft)
+app.put('/api/proposals/:id/withdraw', auth, checkAdmin, async (req, res) => {
+    try {
+        const proposal = await Proposal.findById(req.params.id);
+        if (!proposal) return res.status(404).json({ message: 'Not found' });
+
+        if (proposal.status !== 'open') {
+            return res.status(400).json({ message: 'Only open proposals can be withdrawn.' });
+        }
+
+        // Check for votes
+        if (proposal.consents.length > 0) {
+            return res.status(403).json({ message: 'Cannot withdraw: Proposal has received votes.' });
+        }
+
+        proposal.status = 'draft';
+        await proposal.save();
+        res.json(proposal);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -217,6 +276,8 @@ app.put('/api/proposals/:id/consent', auth, async (req, res) => {
     try {
         const proposal = await Proposal.findById(req.params.id);
         if (!proposal) return res.status(404).json({ message: 'Proposal not found' });
+
+        if (proposal.status !== 'open') return res.status(400).json({ message: 'Voting is not open for this proposal' });
 
         // Toggle consent
         const index = proposal.consents.indexOf(req.user.id);

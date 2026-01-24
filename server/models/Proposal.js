@@ -19,7 +19,11 @@ const ProposalSchema = new mongoose.Schema({
     author: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 
     // Workflow
-    status: { type: String, enum: ['draft', 'approved', 'rejected'], default: 'draft' },
+    // draft: Private to admins, editable
+    // open: Visible to all, voting enabled
+    // approved: Consensus met, ready to publish
+    // published: Live in the rules book
+    status: { type: String, enum: ['draft', 'open', 'approved', 'rejected', 'published'], default: 'draft' },
     approvals: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Admins who approved
     consents: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Members who agreed (voting)
 
