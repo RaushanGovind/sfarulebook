@@ -173,6 +173,8 @@ export default function LandingPage({ onEnter, onLogin, language, onLanguageTogg
 
             <footer style={{ padding: '40px', textAlign: 'center', color: '#94a3b8', fontSize: '0.9rem' }}>
                 &copy; {new Date().getFullYear()} SFA Rules Management System. All rights reserved.
+                <br />
+                <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>v0.0.1 (Build: {new Date().toLocaleString()})</span>
             </footer>
 
             <style>{`
