@@ -476,3 +476,10 @@ body.dark .explanation-box {
         padding: 0 16px;
     }
 }
+
+/* Star Rating */
+.star-details {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}

@@ -183,7 +183,7 @@ app.post('/api/auth/promote', async (req, res) => {
 // --- PROPOSALS (DRAFTS) ---
 
 // Create Draft (Admin Only triggers this instead of direct save)
-app.post('/api/proposals', auth, checkAdmin, async (req, res) => {
+app.post('/api/proposals', auth, async (req, res) => {
     try {
         const adminCount = await User.countDocuments({ role: 'admin' });
         const newProposal = new Proposal({
@@ -202,27 +202,54 @@ app.post('/api/proposals', auth, checkAdmin, async (req, res) => {
 // Get All Proposals (Visible to all Members)
 // Get Active Proposals (Public: Drafts & Approved)
 // Get Proposals (Role Based Access)
+// Get Proposals (Role Based Access)
 app.get('/api/proposals', async (req, res) => {
     try {
         const token = req.header('x-auth-token');
+        let user = null;
         let isAdmin = false;
 
         if (token) {
             try {
                 const decoded = jwt.verify(token, JWT_SECRET);
-                const user = await User.findById(decoded.id);
+                user = await User.findById(decoded.id);
                 if (user && user.role === 'admin') isAdmin = true;
             } catch (e) {
-                // Ignore invalid token, treat as guest
+                // Ignore invalid
             }
         }
 
-        const query = isAdmin
-            ? {} // Admins see all (draft, open, approved, etc)
-            : { status: { $in: ['open', 'approved'] } }; // Public/Members see only active voting items
+        let query;
+        if (user) {
+            if (isAdmin) {
+                // Admins see: Public, All Reviews, Their Drafts
+                query = {
+                    $or: [
+                        { status: { $in: ['open', 'approved', 'published', 'internal_review', 'public_review'] } },
+                        { author: user._id } // Includes own drafts
+                    ]
+                };
+            } else {
+                // Members see: Public, Their Own Drafts/Reviews
+                query = {
+                    $or: [
+                        { status: { $in: ['open', 'approved', 'public_review'] } },
+                        { author: user._id } // Includes own drafts, reviews, etc.
+                    ]
+                };
+            }
+        } else {
+            // Anonymous
+            query = { status: { $in: ['open', 'approved', 'public_review'] } };
+        }
+
 
         const proposals = await Proposal.find(query)
-            .populate('author', 'username userId')
+            .populate('author', 'username userId fullName')
+            .populate('ratings.user', 'username userId fullName role')
+            .populate('remarks.user', 'username userId fullName role')
+            .populate('consents', 'username userId fullName role')
+            .populate('approvals', 'username userId fullName role')
             .sort({ createdAt: -1 });
         res.json(proposals);
     } catch (err) {
@@ -230,19 +257,232 @@ app.get('/api/proposals', async (req, res) => {
     }
 });
 
-// Admin: Open Proposal for Voting
+// Admin: Submit for Internal Review (Draft -> Internal Review)
+app.put('/api/proposals/:id/submit_internal', auth, checkAdmin, async (req, res) => {
+    try {
+        const proposal = await Proposal.findById(req.params.id);
+        if (!proposal) return res.status(404).json({ message: 'Not found' });
+
+        if (proposal.status !== 'draft') return res.status(400).json({ message: 'Only drafts can be submitted for review' });
+        if (proposal.author.toString() !== req.user.id) return res.status(403).json({ message: 'Only author can submit' });
+
+        proposal.status = 'internal_review';
+        await proposal.save();
+        res.json(proposal);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Admin: Submit for Public Review (Approved -> Public Review)
+app.put('/api/proposals/:id/submit_public', auth, checkAdmin, async (req, res) => {
+    try {
+        const proposal = await Proposal.findById(req.params.id);
+        if (!proposal) return res.status(404).json({ message: 'Not found' });
+
+        if (proposal.status !== 'approved') return res.status(400).json({ message: 'Only approved proposals can go to public review' });
+
+        proposal.status = 'public_review';
+        await proposal.save();
+        res.json(proposal);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
+// Edit Proposal (Draft Only)
+app.put('/api/proposals/:id', auth, async (req, res) => {
+    try {
+        const proposal = await Proposal.findById(req.params.id);
+        if (!proposal) return res.status(404).json({ message: 'Not found' });
+
+        if (proposal.status !== 'draft') return res.status(400).json({ message: 'Only drafts can be edited' });
+        if (proposal.author.toString() !== req.user.id) return res.status(403).json({ message: 'Only author can edit' });
+
+        // Update fields
+        if (req.body.title) proposal.title = req.body.title;
+        if (req.body.content) proposal.content = req.body.content;
+        if (req.body.level) proposal.level = req.body.level;
+
+        await proposal.save();
+        res.json(proposal);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Delete Proposal (Draft/Rejected Only)
+app.delete('/api/proposals/:id', auth, async (req, res) => {
+    try {
+        const proposal = await Proposal.findById(req.params.id);
+        if (!proposal) return res.status(404).json({ message: 'Not found' });
+
+        // Allow deleting drafts, and maybe rejected ones.
+        if (!['draft', 'rejected'].includes(proposal.status)) {
+            return res.status(400).json({ message: 'Cannot delete active/published proposals' });
+        }
+
+        if (proposal.author.toString() !== req.user.id && req.user.role !== 'admin') {
+            return res.status(403).json({ message: 'Unauthorized' });
+        }
+
+        await Proposal.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Proposal deleted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Rate Proposal (Admin for internal_review, All users for public_review)
+app.put('/api/proposals/:id/rate', auth, async (req, res) => {
+    try {
+        const { rating } = req.body;
+        if (!rating || rating < 1 || rating > 5) return res.status(400).json({ message: 'Rating must be 1-5' });
+
+        const proposal = await Proposal.findById(req.params.id);
+        if (!proposal) return res.status(404).json({ message: 'Not found' });
+
+        // Access control based on status
+        if (proposal.status === 'internal_review') {
+            const currentUser = await User.findById(req.user.id);
+            if (!currentUser || currentUser.role !== 'admin') {
+                return res.status(403).json({ message: 'Only admins can rate internal reviews' });
+            }
+        } else if (proposal.status === 'public_review') {
+            // All authenticated users can rate
+        } else {
+            return res.status(400).json({ message: 'Rating not available for this proposal status' });
+        }
+
+        // Update existing or add new
+        const existing = proposal.ratings.find(r => r.user.toString() === req.user.id);
+        if (existing) {
+            existing.value = rating;
+        } else {
+            proposal.ratings.push({ user: req.user.id, value: rating });
+        }
+
+        await proposal.save();
+
+        // Return fully populated for UI update
+        const updated = await Proposal.findById(req.params.id)
+            .populate('author', 'username userId')
+            .populate('ratings.user', 'username')
+            .populate('remarks.user', 'username');
+
+        res.json(updated);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Add Remark (Admin for internal_review, All users for public_review)
+app.post('/api/proposals/:id/remark', auth, async (req, res) => {
+    try {
+        const { text } = req.body;
+        if (!text) return res.status(400).json({ message: 'Text required' });
+
+        const proposal = await Proposal.findById(req.params.id);
+        if (!proposal) return res.status(404).json({ message: 'Not found' });
+
+        // Access control based on status
+        if (proposal.status === 'internal_review') {
+            const currentUser = await User.findById(req.user.id);
+            if (!currentUser || currentUser.role !== 'admin') {
+                return res.status(403).json({ message: 'Only admins can comment on internal reviews' });
+            }
+        } else if (proposal.status === 'public_review') {
+            // All authenticated users can comment
+        } else {
+            return res.status(400).json({ message: 'Comments not available for this proposal status' });
+        }
+
+        proposal.remarks.push({ user: req.user.id, text, createdAt: new Date() });
+        await proposal.save();
+
+        // Return fully populated
+        const updated = await Proposal.findById(req.params.id)
+            .populate('author', 'username userId')
+            .populate('ratings.user', 'username')
+            .populate('remarks.user', 'username');
+
+        res.json(updated);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Admin: Approve proposal during internal review
+app.put('/api/proposals/:id/approve_internal', auth, checkAdmin, async (req, res) => {
+    try {
+        const proposal = await Proposal.findById(req.params.id);
+        if (!proposal) return res.status(404).json({ message: 'Not found' });
+
+        if (proposal.status !== 'internal_review') {
+            return res.status(400).json({ message: 'Only proposals in internal review can be approved' });
+        }
+
+        // Add this admin's approval if not already present
+        if (!proposal.approvals.includes(req.user.id)) {
+            proposal.approvals.push(req.user.id);
+        }
+
+        // Get total admin count
+        const totalAdmins = await User.countDocuments({ role: 'admin' });
+        const approvalCount = proposal.approvals.length;
+        const allApproved = approvalCount >= totalAdmins;
+
+        await proposal.save();
+
+        // Return updated proposal with approval status
+        const updated = await Proposal.findById(req.params.id)
+            .populate('author', 'username userId fullName')
+            .populate('approvals', 'username userId fullName')
+            .populate('ratings.user', 'username userId fullName role')
+            .populate('remarks.user', 'username userId fullName role');
+
+        res.json({
+            proposal: updated,
+            approvalCount,
+            totalAdmins,
+            allApproved,
+            message: allApproved
+                ? 'All admins approved! Proposal can now be opened for voting.'
+                : `Approved (${approvalCount}/${totalAdmins} admins)`
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Admin: Open Proposal for Voting (Only when ALL admins approved)
 app.put('/api/proposals/:id/open', auth, checkAdmin, async (req, res) => {
     try {
         const proposal = await Proposal.findById(req.params.id);
         if (!proposal) return res.status(404).json({ message: 'Not found' });
 
-        // Reset voting when opening/re-opening
+        // Must be in internal_review status
+        if (proposal.status !== 'internal_review') {
+            return res.status(400).json({ message: 'Proposal must be in internal review to open for voting' });
+        }
+
+        // Check if all admins have approved
+        const totalAdmins = await User.countDocuments({ role: 'admin' });
+        if (proposal.approvals.length < totalAdmins) {
+            return res.status(400).json({
+                message: `Cannot open for voting. Only ${proposal.approvals.length}/${totalAdmins} admins have approved.`,
+                approvalCount: proposal.approvals.length,
+                totalAdmins
+            });
+        }
+
+        // All approved - open for voting
         proposal.status = 'open';
         proposal.consents = []; // Reset votes
-        proposal.approvals = [req.user.id]; // Auto-approve by the opener
 
         await proposal.save();
-        res.json(proposal);
+        res.json({ proposal, message: 'Proposal opened for public voting!' });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

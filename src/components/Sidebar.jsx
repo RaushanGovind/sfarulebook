@@ -64,9 +64,22 @@ export default function Sidebar({ lessons, currentIndex, onSelect, isOpen, onClo
     const isSearching = searchTerm.length > 0;
 
     const filteredLessons = lessons.map((l, i) => ({ ...l, originalIndex: i }))
-        .filter(lesson =>
-            getTitle(lesson).toLowerCase().includes(searchTerm.toLowerCase())
-        );
+        .filter(lesson => {
+            const query = searchTerm.toLowerCase();
+            const titleMatch = getTitle(lesson).toLowerCase().includes(query);
+
+            let contentMatch = false;
+            if (lesson.content) {
+                if (typeof lesson.content === 'string') {
+                    contentMatch = lesson.content.toLowerCase().includes(query);
+                } else {
+                    contentMatch = (lesson.content.en || "").toLowerCase().includes(query) ||
+                        (lesson.content.hi || "").toLowerCase().includes(query);
+                }
+            }
+
+            return titleMatch || contentMatch;
+        });
 
     const handleDragEnd = (event) => {
         const { active, over } = event;

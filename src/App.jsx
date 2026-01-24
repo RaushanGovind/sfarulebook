@@ -322,7 +322,7 @@ function App() {
                         </button>
                     </div>
                 </div>
-                <ProposalList user={user} onBack={() => setShowProposals(false)} language={language} />
+                <ProposalList user={user} onBack={() => setShowProposals(false)} language={language} lessons={lessonsData} />
             </div>
         )
     }

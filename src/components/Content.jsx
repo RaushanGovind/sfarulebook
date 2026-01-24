@@ -92,17 +92,19 @@ export default function Content({ lesson, onPrev, onNext, hasPrev, hasNext, lang
                                     fontSize: '0.9rem', transition: 'background 0.2s'
                                 }}
                             >
-                                <Save size={16} /> Save Changes
+                                <Save size={16} /> Save to Draft
                             </button>
                         </div>
                         <Suspense fallback={<div style={{ padding: '20px', textAlign: 'center' }}>Loading Editor...</div>}>
-                            <ReactQuill
-                                theme="snow"
-                                value={editedContent}
-                                onChange={setEditedContent}
-                                modules={modules}
-                                style={{ height: '400px', marginBottom: '50px' }}
-                            />
+                            <div style={{ resize: 'vertical', overflow: 'hidden', minHeight: '400px', height: '600px', border: '1px solid #e2e8f0', borderRadius: '6px', marginBottom: '50px', background: 'white' }}>
+                                <ReactQuill
+                                    theme="snow"
+                                    value={editedContent}
+                                    onChange={setEditedContent}
+                                    modules={modules}
+                                    style={{ height: '100%', border: 'none' }}
+                                />
+                            </div>
                         </Suspense>
                     </div>
                 ) : (
