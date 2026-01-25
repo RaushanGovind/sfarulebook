@@ -14,8 +14,8 @@ import MemberDirectoryModal from './components/MemberDirectoryModal'
 
 // Backend URL
 const API_URL = import.meta.env.PROD
-    ? 'https://sfa-rules-book.vercel.app/api'
-    : 'http://127.0.0.1:5001/api';
+    ? '' // Use relative path in production
+    : 'http://127.0.0.1:5001';
 // const GOOGLE_CLIENT_ID = ...; // Removed
 
 function App() {

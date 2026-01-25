@@ -3,7 +3,7 @@ import { X, User, Lock, ArrowRight, Eye, EyeOff, MapPin, FileText, BadgeCheck } 
 // GoogleLogin removed as per request
 
 const API_URL = import.meta.env.PROD
-    ? 'https://sfa-rules-book.vercel.app'
+    ? ''
     : 'http://127.0.0.1:5001';
 
 // ...
