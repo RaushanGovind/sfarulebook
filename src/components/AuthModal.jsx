@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
 import { X, User, Lock, ArrowRight, Eye, EyeOff, MapPin, FileText, BadgeCheck } from 'lucide-react';
-// GoogleLogin removed as per request
 
 const API_URL = import.meta.env.PROD
-    ? ''
-    : 'http://127.0.0.1:5001';
-
-// ...
+    ? '/api'
+    : 'http://127.0.0.1:5001/api';
 
 export default function AuthModal({ isOpen, onClose, onLogin }) {
     const [isRegistering, setIsRegistering] = useState(false);
@@ -36,7 +33,7 @@ export default function AuthModal({ isOpen, onClose, onLogin }) {
 
         setLoading(true);
 
-        const endpoint = isRegistering ? '/api/auth/register' : '/api/auth/login';
+        const endpoint = isRegistering ? '/auth/register' : '/auth/login';
         const url = `${API_URL}${endpoint}`;
 
         try {
@@ -46,14 +43,12 @@ export default function AuthModal({ isOpen, onClose, onLogin }) {
                 body: JSON.stringify(formData)
             });
 
-            // Handle non-JSON responses (like 404 HTML pages)
             const contentType = res.headers.get("content-type");
             let data;
             if (contentType && contentType.includes("application/json")) {
                 data = await res.json();
             } else {
-                const text = await res.text();
-                throw new Error(`Server Error: ${res.status} ${res.statusText}`);
+                throw new Error(`Server Error: ${res.status}`);
             }
 
             if (!res.ok) {
@@ -86,14 +81,8 @@ export default function AuthModal({ isOpen, onClose, onLogin }) {
                 </div>
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-
-                    {/* Google Login Removed */}
-
                     {error && (
-                        <div style={{
-                            padding: '10px', background: '#fee2e2', color: '#b91c1c',
-                            borderRadius: '6px', fontSize: '0.9rem'
-                        }}>
+                        <div style={{ padding: '10px', background: '#fee2e2', color: '#b91c1c', borderRadius: '6px', fontSize: '0.9rem' }}>
                             {error}
                         </div>
                     )}
@@ -125,11 +114,7 @@ export default function AuthModal({ isOpen, onClose, onLogin }) {
                         <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            style={{
-                                position: 'absolute', right: '10px', top: '10px',
-                                background: 'none', border: 'none', cursor: 'pointer',
-                                color: 'var(--color-text-muted)'
-                            }}
+                            style={{ position: 'absolute', right: '10px', top: '10px', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-muted)' }}
                         >
                             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                         </button>
@@ -148,7 +133,6 @@ export default function AuthModal({ isOpen, onClose, onLogin }) {
                                     onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                                 />
                             </div>
-
                             <div style={{ position: 'relative' }}>
                                 <Lock size={18} style={{ position: 'absolute', top: '10px', left: '12px', color: 'var(--color-text-muted)' }} />
                                 <input
@@ -161,7 +145,6 @@ export default function AuthModal({ isOpen, onClose, onLogin }) {
                                     required
                                 />
                             </div>
-
                             <div style={{ position: 'relative' }}>
                                 <MapPin size={18} style={{ position: 'absolute', top: '10px', left: '12px', color: 'var(--color-text-muted)' }} />
                                 <input
@@ -173,28 +156,15 @@ export default function AuthModal({ isOpen, onClose, onLogin }) {
                                     onChange={(e) => setFormData({ ...formData, headquarter: e.target.value })}
                                 />
                             </div>
-
                             <div style={{ position: 'relative' }}>
                                 <FileText size={18} style={{ position: 'absolute', top: '10px', left: '12px', color: 'var(--color-text-muted)' }} />
                                 <input
                                     type="text"
-                                    placeholder="CMS ID (e.g., ABC1234)"
+                                    placeholder="CMS ID"
                                     style={{ paddingLeft: '38px' }}
                                     className="search-input"
                                     value={formData.cmsId}
                                     onChange={(e) => setFormData({ ...formData, cmsId: e.target.value.toUpperCase() })}
-                                />
-                            </div>
-
-                            <div style={{ position: 'relative' }}>
-                                <BadgeCheck size={18} style={{ position: 'absolute', top: '10px', left: '12px', color: 'var(--color-text-muted)' }} />
-                                <input
-                                    type="text"
-                                    placeholder="SFA ID (e.g., SFA1234)"
-                                    style={{ paddingLeft: '38px' }}
-                                    className="search-input"
-                                    value={formData.sfaId}
-                                    onChange={(e) => setFormData({ ...formData, sfaId: e.target.value.toUpperCase() })}
                                 />
                             </div>
                         </>
@@ -203,21 +173,7 @@ export default function AuthModal({ isOpen, onClose, onLogin }) {
                     <button
                         type="submit"
                         disabled={loading}
-                        style={{
-                            marginTop: '10px',
-                            padding: '12px',
-                            background: 'var(--color-accent)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '8px',
-                            fontWeight: 600,
-                            cursor: loading ? 'wait' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px',
-                            opacity: loading ? 0.7 : 1
-                        }}
+                        style={{ marginTop: '10px', padding: '12px', background: 'var(--color-accent)', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: loading ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', opacity: loading ? 0.7 : 1 }}
                     >
                         {loading ? 'Processing...' : (isRegistering ? 'Register' : 'Login')}
                         {!loading && <ArrowRight size={18} />}
@@ -228,15 +184,11 @@ export default function AuthModal({ isOpen, onClose, onLogin }) {
                         <button
                             type="button"
                             onClick={() => { setIsRegistering(!isRegistering); setError(''); }}
-                            style={{
-                                background: 'none', border: 'none', color: 'var(--color-accent)',
-                                fontWeight: 600, cursor: 'pointer', marginLeft: '5px', textDecoration: 'underline'
-                            }}
+                            style={{ background: 'none', border: 'none', color: 'var(--color-accent)', fontWeight: 600, cursor: 'pointer', marginLeft: '5px', textDecoration: 'underline' }}
                         >
                             {isRegistering ? 'Login' : 'Register'}
                         </button>
                     </div>
-
                 </form>
             </div>
         </div>
