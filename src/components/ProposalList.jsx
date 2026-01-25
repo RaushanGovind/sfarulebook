@@ -4,8 +4,8 @@ import * as Diff from 'diff';
 import EditProposalModal from './EditProposalModal';
 
 const API_URL = import.meta.env.PROD
-    ? 'https://sfa-rules-book.vercel.app/api'
-    : '/api';
+    ? '/api'
+    : '/api'; // Use proxy in dev or standardized relative path
 
 // Star Rating Component
 function StarRating({ value, onChange, disabled = false }) {
