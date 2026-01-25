@@ -162,21 +162,7 @@ export default function Content({ lesson, onPrev, onNext, hasPrev, hasNext, lang
         <div className="content-scroll">
             <div className="document-container" key={contentKey} style={settings?.pageSize !== 'responsive' ? containerStyle : {}}>
 
-                {/* Page Footer Elements (Number & Chapter Title) */}
-                {settings?.showPageNumbers && (
-                    <>
-                        {/* Bottom Left: Chapter Title */}
-                        {!isEditor && (
-                            <div style={{ position: 'absolute', bottom: '20px', left: '40px', fontSize: '0.75rem', color: 'var(--color-text-muted)', maxWidth: '50%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontStyle: 'italic' }}>
-                                {getTitle()}
-                            </div>
-                        )}
-                        {/* Bottom Right: Page Number */}
-                        <div style={{ position: 'absolute', bottom: '20px', right: '40px', fontSize: '0.8rem', color: 'var(--color-text-muted)', fontWeight: 'bold' }}>
-                            {lesson.fromLink ? "Active Rule" : `Page ${pageNumber ? pageNumber - 1 : "?"} of ${totalLessons ? totalLessons - 1 : "?"}`}
-                        </div>
-                    </>
-                )}
+
 
                 {/* Document Header */}
                 <div style={{ marginBottom: '40px', borderBottom: '1px solid var(--color-border)', paddingBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
@@ -238,25 +224,55 @@ export default function Content({ lesson, onPrev, onNext, hasPrev, hasNext, lang
 
                 {/* Navigation Footer */}
                 {!isEditor && (
-                    <div className="nav-footer" style={{ justifyContent: 'center', gap: '40px' }}>
-                        <button
-                            className="nav-btn"
-                            onClick={onPrev}
-                            disabled={!hasPrev}
-                            title={language === 'hi' ? 'पिछला' : 'Previous'}
-                            style={{ padding: '10px', borderRadius: '50%', width: '44px', height: '44px', justifyContent: 'center' }}
-                        >
-                            <ChevronLeft size={24} />
-                        </button>
-                        <button
-                            className="nav-btn"
-                            onClick={onNext}
-                            disabled={!hasNext}
-                            title={language === 'hi' ? 'अगला' : 'Next'}
-                            style={{ padding: '10px', borderRadius: '50%', width: '44px', height: '44px', justifyContent: 'center' }}
-                        >
-                            <ChevronRight size={24} />
-                        </button>
+                    <div className="nav-footer" style={{
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: '20px',
+                        marginTop: '40px',
+                        borderTop: '1px solid var(--color-border)',
+                        paddingTop: '20px'
+                    }}>
+                        {/* Buttons Row */}
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '40px', width: '100%' }}>
+                            <button
+                                className="nav-btn"
+                                onClick={onPrev}
+                                disabled={!hasPrev}
+                                title={language === 'hi' ? 'पिछला' : 'Previous'}
+                                style={{ padding: '10px', borderRadius: '50%', width: '44px', height: '44px', justifyContent: 'center' }}
+                            >
+                                <ChevronLeft size={24} />
+                            </button>
+                            <button
+                                className="nav-btn"
+                                onClick={onNext}
+                                disabled={!hasNext}
+                                title={language === 'hi' ? 'अगला' : 'Next'}
+                                style={{ padding: '10px', borderRadius: '50%', width: '44px', height: '44px', justifyContent: 'center' }}
+                            >
+                                <ChevronRight size={24} />
+                            </button>
+                        </div>
+
+                        {/* Page Info Row (Responsive) */}
+                        {settings?.showPageNumbers && (
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                width: '100%',
+                                fontSize: '0.75rem',
+                                color: 'var(--color-text-muted)',
+                                padding: '0 10px',
+                                marginTop: '5px'
+                            }}>
+                                <div style={{ fontStyle: 'italic', maxWidth: '45%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                    {getTitle()}
+                                </div>
+                                <div style={{ fontWeight: 'bold' }}>
+                                    {lesson.fromLink ? (language === 'hi' ? "सक्रिय नियम" : "Active Rule") : `Page ${pageNumber ? pageNumber - 1 : "?"} of ${totalLessons ? totalLessons - 1 : "?"}`}
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
 
