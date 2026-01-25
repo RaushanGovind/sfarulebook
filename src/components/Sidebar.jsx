@@ -158,14 +158,16 @@ export default function Sidebar({ lessons, currentIndex, onSelect, isOpen, onClo
 
                                     const isLinkRule = lesson.fromLink;
                                     const itemStyle = isLinkRule ? {
-                                        backgroundColor: '#1e293b',
+                                        backgroundColor: '#1e293b', // Darker theme for editor mode to show contrast
                                         color: '#ffffff',
                                         fontWeight: 'bold',
                                         border: '1px solid #475569',
-                                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                                        borderRadius: '8px',
+                                        marginBottom: '16px',
+                                        padding: '10px',
+                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.3)'
                                     } : {
-                                        opacity: 0.6,
-                                        filter: 'grayscale(0.5)'
+                                        color: 'var(--color-text-main)'
                                     };
 
                                     return (
