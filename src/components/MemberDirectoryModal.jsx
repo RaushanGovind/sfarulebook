@@ -6,7 +6,7 @@ export default function MemberDirectoryModal({ isOpen, onClose }) {
     const [loading, setLoading] = useState(true);
 
     const API_URL = import.meta.env.PROD
-        ? 'https://sfa-rules-book.vercel.app/api'
+        ? '/api'
         : 'http://127.0.0.1:5001/api';
 
     useEffect(() => {
