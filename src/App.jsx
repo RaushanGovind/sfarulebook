@@ -1,7 +1,7 @@
 // SFA Build: 2026.01.25.01 - Clean Repush
 import { useState, useEffect } from 'react'
 import { arrayMove } from '@dnd-kit/sortable'
-import { Menu, LogOut, FileText, Edit3, User, Moon, Sun, Globe, Settings, Users } from 'lucide-react'
+import { Menu, LogOut, FileText, Edit3, User, Moon, Sun, Globe, Settings, Users, ArrowLeft } from 'lucide-react'
 import { lessons as initialLessons } from './data'
 import Sidebar from './components/Sidebar'
 import Content from './components/Content'
@@ -327,15 +327,42 @@ function App() {
     if (showProposals) {
         return (
             <div className="app-layout" style={{ display: 'block' }}>
-                <div className="top-bar">
-                    <div style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>SFA Proposals</div>
-                    <div className="top-actions">
-                        <button className="icon-btn" onClick={() => setShowProposals(false)}>
-                            <LogOut size={20} style={{ transform: 'rotate(180deg)' }} /> Back to Rules
+                <div className="top-bar" style={{ padding: '0 16px', borderBottom: '1px solid var(--color-border)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <button
+                            className="icon-btn"
+                            onClick={() => setShowProposals(false)}
+                            style={{
+                                width: 'auto',
+                                padding: '8px 16px',
+                                background: 'var(--color-accent)',
+                                color: 'white',
+                                borderRadius: '20px',
+                                gap: '8px',
+                                border: 'none',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center'
+                            }}
+                        >
+                            <ArrowLeft size={18} />
+                            <span style={{ fontWeight: 600 }}>{language === 'hi' ? 'नियमों पर वापस' : 'Back to Rules'}</span>
                         </button>
+
+                        <div style={{
+                            fontWeight: 800,
+                            fontSize: '1.2rem',
+                            color: 'var(--color-text-main)',
+                            borderLeft: '2px solid var(--color-border)',
+                            paddingLeft: '12px'
+                        }}>
+                            {language === 'hi' ? 'संशोधन प्रस्ताव' : 'Proposals'}
+                        </div>
                     </div>
                 </div>
-                <ProposalList user={user} onBack={() => setShowProposals(false)} language={language} lessons={lessonsData} />
+                <div style={{ background: 'var(--color-bg)', minHeight: 'calc(100vh - 64px)' }}>
+                    <ProposalList user={user} onBack={() => setShowProposals(false)} language={language} lessons={lessonsData} />
+                </div>
             </div>
         )
     }
