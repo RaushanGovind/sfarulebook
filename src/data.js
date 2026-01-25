@@ -1,4 +1,4 @@
-export const lessons = [
+const rawLessons = [
   {
     level: "ACTIVE RULE (2026)",
     fromLink: true, // Custom flag for styling
@@ -755,3 +755,5 @@ export const lessons = [
     }
   }
 ];
+
+export const lessons = rawLessons.map((l, i) => ({ ...l, order: i }));

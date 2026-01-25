@@ -245,14 +245,16 @@ export default function Sidebar({ lessons, currentIndex, onSelect, isOpen, onClo
 
                             const isLinkRule = lesson.fromLink;
                             const itemStyle = isLinkRule ? {
-                                backgroundColor: '#0f172a', // Slightly darker for static
-                                color: '#f8fafc',
+                                backgroundColor: '#fff7ed', // Warm orange/yellow tint for Active
+                                color: '#9a3412',
                                 fontWeight: 'bold',
-                                borderLeft: '4px solid #3b82f6',
-                                paddingLeft: '8px' // Adjust padding for border
+                                border: '1px solid #fed7aa',
+                                borderRadius: '8px',
+                                marginBottom: '24px', // Significant separation
+                                padding: '12px',
+                                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                             } : {
-                                opacity: 0.6,
-                                filter: 'grayscale(100%)' // Stronger haze
+                                color: 'var(--color-text-main)'
                             };
 
                             return (

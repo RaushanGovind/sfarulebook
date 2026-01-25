@@ -52,22 +52,31 @@ function App() {
     const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem("sfaDarkMode_v2") === "1");
 
     // Settings state (Font, Colors)
+    const [language, setLanguage] = useState(() => localStorage.getItem("sfaLanguage") || "hi");
+
     const defaultSettings = {
         bgColor: "#fdfbf7", // Parchment
         textColor: "#1c1917", // Warm Black
         sidebarBg: "#f5f5f4", // Stone 100
         sidebarText: "#1c1917",
-        fontFamily: "'Merriweather', 'Georgia', serif", // Serif for constitution look
-        fontSize: 18 // Slightly larger for readability
+        fontFamilyEn: "'Merriweather', 'Georgia', serif",
+        fontFamilyHi: "'Noto Sans Devanagari', sans-serif",
+        fontSize: 18,
+        pageSize: 'a4',
+        showPageNumbers: true
     };
 
     const [settings, setSettings] = useState(() => {
-        const saved = localStorage.getItem("sfaReaderSettings_v2");
-        return saved ? JSON.parse(saved) : defaultSettings;
+        const saved = localStorage.getItem("sfaReaderSettings_v3"); // Bump version to reset defaults if structure changed
+        if (saved) {
+            const parsed = JSON.parse(saved);
+            // Merge with defaults to ensure new keys exist
+            return { ...defaultSettings, ...parsed };
+        }
+        return defaultSettings;
     });
 
     const [showSettings, setShowSettings] = useState(false);
-    const [language, setLanguage] = useState(() => localStorage.getItem("sfaLanguage") || "hi");
 
     // --- EFFECTS ---
 
@@ -127,9 +136,12 @@ function App() {
         if (settings.textColor !== defaultSettings.textColor) document.body.style.color = settings.textColor;
         else document.body.style.removeProperty('color');
 
-        document.body.style.fontFamily = settings.fontFamily;
+        // Apply font based on language
+        const font = language === 'hi' ? (settings.fontFamilyHi || defaultSettings.fontFamilyHi) : (settings.fontFamilyEn || defaultSettings.fontFamilyEn);
+        document.body.style.fontFamily = font;
+
         document.body.style.fontSize = settings.fontSize + "px";
-    }, [settings, isDarkMode]);
+    }, [settings, isDarkMode, language]);
 
     // Persist index
     useEffect(() => {
@@ -453,9 +465,12 @@ function App() {
                     onNext={handleNext}
                     hasPrev={currentIndex > 0}
                     hasNext={currentIndex < lessonsData.length - 1}
+                    totalLessons={lessonsData.length}
+                    pageNumber={currentIndex + 1}
                     language={language}
                     isEditor={isEditor}
                     onSave={handleSaveLessonContent}
+                    settings={settings}
                 />
 
             </main>

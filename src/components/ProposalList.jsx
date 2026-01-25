@@ -604,10 +604,9 @@ export default function ProposalList({ user, onBack, language, lessons = [] }) {
 
     return (
         <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
-                <button onClick={onBack} className="icon-btn" style={{ width: 'auto', padding: '0 10px' }}>&larr; Back</button>
-                <h2>Proposal Management</h2>
-            </div>
+            {/* Redundant header removed - handled by top bar */}
+
+            {/* Debug info - remove after testing */}
 
             {/* Debug info - remove after testing */}
             {proposals.length === 0 && !loading && (
@@ -797,13 +796,17 @@ export default function ProposalList({ user, onBack, language, lessons = [] }) {
                                         </div>
                                     ) : (
                                         <div style={{ fontSize: '0.9rem', color: 'var(--color-text-main)', opacity: 0.8, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                            {contentHtml.replace(/<[^>]+>/g, '')}
+                                            {(() => {
+                                                // Decode HTML entities for preview
+                                                const doc = new DOMParser().parseFromString(contentHtml, 'text/html');
+                                                return doc.body.textContent || "";
+                                            })()}
                                         </div>
                                     )}
                                 </div>
 
                                 {/* ACTIONS */}
-                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', borderTop: '1px solid var(--color-border)', paddingTop: '12px' }}>
+                                <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', borderTop: '1px solid var(--color-border)', paddingTop: '16px' }}>
 
                                     {/* AUTHOR/ADMIN: SUBMIT FOR REVIEW (Draft -> Internal Review) */}
                                     {(isAdmin || (user?.id === (p.author?._id || p.author?.id || p.author))) && p.status === 'draft' && (
@@ -811,8 +814,9 @@ export default function ProposalList({ user, onBack, language, lessons = [] }) {
                                             <button
                                                 onClick={() => handleAction(p._id, 'submit_internal')}
                                                 style={{
-                                                    background: '#6366f1', color: 'white', padding: '8px 16px', borderRadius: '6px',
-                                                    border: 'none', cursor: 'pointer', fontWeight: 600, display: 'flex', gap: '6px', alignItems: 'center'
+                                                    background: '#6366f1', color: 'white', padding: '10px 20px', borderRadius: '8px',
+                                                    border: 'none', cursor: 'pointer', fontWeight: 600, display: 'flex', gap: '8px', alignItems: 'center',
+                                                    flex: 1, justifyContent: 'center', minWidth: '160px'
                                                 }}
                                             >
                                                 <Send size={16} /> Submit for Review

@@ -466,7 +466,7 @@ body.dark .explanation-box {
     }
 
     .document-container {
-        padding: 24px;
+        padding: 16px;
         margin: 0;
         border: none;
         box-shadow: none;
@@ -478,8 +478,27 @@ body.dark .explanation-box {
 }
 
 /* Star Rating */
-.star-details {
-    display: flex;
-    align-items: center;
-    gap: 4px;
+/* Quill Editor Overrides */
+.ql-container.ql-snow {
+    border: none !important;
+    font-family: inherit !important;
+    /* Use app font */
+    font-size: 1rem !important;
+}
+
+.ql-editor {
+    padding: 0 !important;
+    /* Align with read view */
+    min-height: 300px;
+}
+
+.ql-toolbar.ql-snow {
+    border: none !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    /* Subtle separator */
+    position: sticky;
+    top: 0;
+    background: var(--color-bg-surface);
+    z-index: 10;
+    margin-bottom: 20px;
 }

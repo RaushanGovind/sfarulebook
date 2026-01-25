@@ -118,48 +118,120 @@ export default function SettingsModal({ settings, onSave, onClose, onReset, onRe
                     {/* APPEARANCE TAB */}
                     {activeTab === 'appearance' && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>Font Family</label>
-                                <div style={{ display: 'flex', gap: '8px' }}>
-                                    <button
-                                        className={`filter-chip ${localSettings.fontFamily.includes('Inter') ? 'active' : ''}`}
-                                        onClick={() => setLocalSettings({ ...localSettings, fontFamily: "'Inter', sans-serif" })}
+
+                            {/* Page Layout Section */}
+                            <div style={{ paddingBottom: '16px', borderBottom: '1px solid var(--color-border)' }}>
+                                <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', color: 'var(--color-text-muted)' }}>Page Layout</h4>
+
+                                {/* Page Numbers Toggle */}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                    <label style={{ fontSize: '0.9rem', cursor: 'pointer' }} htmlFor="pageNoToggle">Show Page Numbers</label>
+                                    <div
+                                        onClick={() => setLocalSettings({ ...localSettings, showPageNumbers: !localSettings.showPageNumbers })}
+                                        style={{
+                                            width: '40px', height: '22px', borderRadius: '12px',
+                                            background: localSettings.showPageNumbers ? 'var(--color-primary)' : '#ccc',
+                                            position: 'relative', cursor: 'pointer', transition: 'background 0.2s'
+                                        }}
                                     >
-                                        Modern
-                                    </button>
-                                    <button
-                                        className={`filter-chip ${localSettings.fontFamily.includes('Serif') ? 'active' : ''}`}
-                                        onClick={() => setLocalSettings({ ...localSettings, fontFamily: "'Merriweather', serif" })}
+                                        <div style={{
+                                            width: '18px', height: '18px', borderRadius: '50%', background: 'white',
+                                            position: 'absolute', top: '2px', left: localSettings.showPageNumbers ? '20px' : '2px',
+                                            transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                                        }} />
+                                    </div>
+                                </div>
+
+                                {/* Page Size Select */}
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>Page Size</label>
+                                    <select
+                                        value={localSettings.pageSize || 'a4'}
+                                        onChange={(e) => setLocalSettings({ ...localSettings, pageSize: e.target.value })}
+                                        style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #ccc' }}
                                     >
-                                        Classic
-                                    </button>
+                                        <option value="responsive">Responsive (Full Width)</option>
+                                        <option value="a4">A4 (Standard)</option>
+                                        <option value="a3">A3 (Large)</option>
+                                        <option value="a5">A5 (Small)</option>
+                                        <option value="letter">US Letter</option>
+                                        <option value="legal">US Legal</option>
+                                    </select>
                                 </div>
                             </div>
-                            <div>
-                                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>Font Size ({localSettings.fontSize}px)</label>
-                                <input
-                                    type="range" min="14" max="24" value={localSettings.fontSize}
-                                    onChange={(e) => setLocalSettings({ ...localSettings, fontSize: Number(e.target.value) })}
-                                    style={{ width: '100%' }}
-                                />
+
+                            {/* Typography Section */}
+                            <div style={{ paddingBottom: '16px', borderBottom: '1px solid var(--color-border)' }}>
+                                <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', color: 'var(--color-text-muted)' }}>Typography</h4>
+
+                                <div style={{ marginBottom: '16px' }}>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>English Font</label>
+                                    <select
+                                        value={localSettings.fontFamilyEn || "'Merriweather', serif"}
+                                        onChange={(e) => setLocalSettings({ ...localSettings, fontFamilyEn: e.target.value })}
+                                        style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #ccc', fontFamily: localSettings.fontFamilyEn }}
+                                    >
+                                        <option value="'Inter', sans-serif">Inter (Modern Sans)</option>
+                                        <option value="'Merriweather', serif">Merriweather (Classic Serif)</option>
+                                        <option value="'Roboto Mono', monospace">Roboto Mono (Code)</option>
+                                        <option value="'Comic Sans MS', cursive">Comic Sans (Casual)</option>
+                                    </select>
+                                </div>
+
+                                <div style={{ marginBottom: '16px' }}>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>Hindi Font</label>
+                                    <select
+                                        value={localSettings.fontFamilyHi || "'Noto Sans Devanagari', sans-serif"}
+                                        onChange={(e) => setLocalSettings({ ...localSettings, fontFamilyHi: e.target.value })}
+                                        style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #ccc', fontFamily: localSettings.fontFamilyHi }}
+                                    >
+                                        <option value="'Noto Sans Devanagari', sans-serif">Noto Sans (Standard)</option>
+                                        <option value="'Tiro Devanagari Hindi', serif">Tiro Devanagari (Traditional)</option>
+                                        <option value="'Rozha One', serif">Rozha One (Stylish)</option>
+                                        <option value="'Poppins', sans-serif">Poppins (Modern)</option>
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>Base Font Size ({localSettings.fontSize}px)</label>
+                                    <input
+                                        type="range" min="12" max="32" value={localSettings.fontSize}
+                                        onChange={(e) => setLocalSettings({ ...localSettings, fontSize: Number(e.target.value) })}
+                                        style={{ width: '100%' }}
+                                    />
+                                </div>
                             </div>
+
+                            {/* Theme Section */}
                             <div>
-                                <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>Theme Colors</label>
+                                <h4 style={{ margin: '0 0 12px 0', fontSize: '0.95rem', color: 'var(--color-text-muted)' }}>Colors</h4>
                                 <div style={{ display: 'flex', gap: '10px' }}>
                                     {[
-                                        { bg: '#ffffff', text: '#334155', sBg: '#ffffff', sText: '#334155', name: 'Light' },
+                                        { bg: '#ffffff', text: '#334155', sBg: '#f8fafc', sText: '#334155', name: 'Clean' },
+                                        { bg: '#fdfbf7', text: '#1c1917', sBg: '#f5f5f4', sText: '#1c1917', name: 'Parchment' }, // Default
                                         { bg: '#fef2f2', text: '#450a0a', sBg: '#fff1f2', sText: '#881337', name: 'Rose' },
-                                        { bg: '#f0fdf4', text: '#052e16', sBg: '#f0fdfa', sText: '#064e3b', name: 'Green' },
-                                        { bg: '#1e293b', text: '#e2e8f0', sBg: '#0f172a', sText: '#94a3b8', name: 'Dark' }
+                                        { bg: '#f0fdf4', text: '#052e16', sBg: '#f0fdfa', sText: '#064e3b', name: 'Forest' },
+                                        { bg: '#1e293b', text: '#e2e8f0', sBg: '#0f172a', sText: '#94a3b8', name: 'Midnight' },
+                                        { bg: '#000000', text: '#e5e5e5', sBg: '#171717', sText: '#a3a3a3', name: 'OLED' }
                                     ].map(t => (
                                         <div key={t.name}
-                                            onClick={() => setLocalSettings({ ...localSettings, bgColor: t.bg, textColor: t.text, sidebarBg: t.sBg, sidebarText: t.sText })}
+                                            onClick={() => setLocalSettings({
+                                                ...localSettings,
+                                                bgColor: t.bg,
+                                                textColor: t.text,
+                                                sidebarBg: t.sBg,
+                                                sidebarText: t.sText
+                                            })}
                                             style={{
-                                                width: '30px', height: '30px', borderRadius: '50%', background: t.bg,
-                                                border: `2px solid ${localSettings.bgColor === t.bg ? 'var(--color-accent)' : '#ccc'}`, cursor: 'pointer'
+                                                width: '36px', height: '36px', borderRadius: '50%', background: t.bg,
+                                                border: `2px solid ${localSettings.bgColor === t.bg ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                                                cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
                                             }}
                                             title={t.name}
-                                        />
+                                        >
+                                            <span style={{ fontSize: '10px', color: t.text, fontWeight: 'bold' }}>A</span>
+                                        </div>
                                     ))}
                                 </div>
                             </div>

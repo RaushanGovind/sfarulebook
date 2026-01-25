@@ -1,18 +1,54 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react';
+// Lazy load the editor but we also need Quill for registration
+// We can get Quill from the package usually.
+import React, { useState, useEffect, Suspense, lazy, useRef } from 'react';
 import { ChevronLeft, ChevronRight, Save } from 'lucide-react';
 import 'react-quill-new/dist/quill.snow.css';
 
-// Lazy load the editor to speed up initial page load
-const ReactQuill = lazy(() => import('react-quill-new'));
+// We need to import Quill synchronously to register blots effectively before render if possible, 
+// OR we rely on the lazy load. 
+// Standard pattern: import ReactQuill, { Quill } from ...
+// But we are lazy loading `react-quill-new`.
+// Let's lazy load the internal component separately or just statically import it for now to avoid complexity with blot registration.
+// Static import is safer for advanced customization.
+import ReactQuill, { Quill } from 'react-quill-new';
 
-export default function Content({ lesson, onPrev, onNext, hasPrev, hasNext, language, isEditor, onSave }) {
+// Register Custom HR Blot
+const BlockEmbed = Quill.import('blots/block/embed');
+
+class DividerBlot extends BlockEmbed {
+    static create(value) {
+        const node = super.create();
+        node.setAttribute('style', `border: none; border-top: ${value}px solid #333; margin: 10px 0;`);
+        // Store value for delta
+        node.setAttribute('data-thickness', value);
+        return node;
+    }
+
+    static value(node) {
+        return node.getAttribute('data-thickness');
+    }
+}
+DividerBlot.blotName = 'divider';
+DividerBlot.tagName = 'hr';
+Quill.register(DividerBlot);
+
+export default function Content({ lesson, onPrev, onNext, hasPrev, hasNext, language, isEditor, onSave, settings, totalLessons, pageNumber }) {
     const [editedContent, setEditedContent] = useState("");
+    const quillRef = useRef(null);
+    // ... (rest of the file remains unchanged until render)
+
 
     // Helper to get locale content
     const getContent = () => {
         if (!lesson) return "";
         if (typeof lesson.content === 'string') return lesson.content;
         return lesson.content[language] || lesson.content['hi'] || lesson.content['en'];
+    };
+
+    const getTitle = () => {
+        if (!lesson) return "";
+        if (typeof lesson.title === 'string') return lesson.title;
+        return lesson.title[language] || lesson.title['en'];
     };
 
     // Sync state with prop
@@ -37,7 +73,6 @@ export default function Content({ lesson, onPrev, onNext, hasPrev, hasNext, lang
 
     const handleSave = () => {
         onSave(editedContent);
-        // Could replace alert with a nicer toast later
         const btn = document.getElementById('save-btn');
         if (btn) {
             const originalText = btn.innerHTML;
@@ -48,25 +83,103 @@ export default function Content({ lesson, onPrev, onNext, hasPrev, hasNext, lang
         }
     };
 
-    const modules = {
-        toolbar: [
-            [{ 'header': [1, 2, 3, false] }],
-            ['bold', 'italic', 'underline', 'strike'],
-            [{ 'color': [] }, { 'background': [] }],
-            [{ 'list': 'ordered' }, { 'list': 'bullet' }],
-            ['link', 'clean']
-        ],
+    // Custom Handler
+    const insertDivider = () => {
+        const thickness = prompt("Enter line thickness (e.g. 1, 3, 5):", "2");
+        if (thickness && !isNaN(thickness)) {
+            const quill = quillRef.current.getEditor();
+            const range = quill.getSelection();
+            if (range) {
+                quill.insertEmbed(range.index, 'divider', thickness);
+                quill.setSelection(range.index + 1);
+            }
+        }
     };
+
+    // Memoize modules to prevent re-instantiation
+    const modules = React.useMemo(() => ({
+        toolbar: {
+            container: [
+                [{ 'header': [1, 2, 3, 4, 5, 6, false] }],
+                [{ 'font': [] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'color': [] }, { 'background': [] }],
+                [{ 'script': 'sub' }, { 'script': 'super' }],
+                [{ 'align': [] }],
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
+                ['blockquote'],
+                ['link', 'clean'],
+                ['divider']
+            ],
+            handlers: {
+                'divider': insertDivider
+            }
+        }
+    }), []);
+
+    // Custom Toolbar Icon for divider
+    useEffect(() => {
+        const dividerBtn = document.querySelector('.ql-divider');
+        if (dividerBtn) {
+            dividerBtn.innerHTML = '<b style="font-size:16px;">—</b>'; // Simple icon
+            dividerBtn.title = "Insert Horizontal Line";
+        }
+    }, [isEditor]); // Re-run when editor appears
 
     // Add key to force animation re-trigger on lesson change
     const contentKey = lesson.originalIndex !== undefined ? lesson.originalIndex : (lesson.title?.en || "content");
 
+    // Page Size Logic
+    const getPageWidth = () => {
+        if (!settings || !settings.pageSize) return '100%';
+        switch (settings.pageSize) {
+            case 'a4': return '210mm'; // Standard A4 width
+            case 'a3': return '297mm';
+            case 'a5': return '148mm';
+            case 'letter': return '216mm'; // 8.5 inches
+            case 'legal': return '216mm';
+            default: return '100%';
+        }
+    };
+
+    const containerStyle = {
+        maxWidth: getPageWidth(),
+        width: '100%',
+        margin: '0 auto', // Center it
+        minHeight: settings?.pageSize !== 'responsive' ? '297mm' : 'auto', // Approx height for A4 visual
+        position: 'relative',
+        boxShadow: settings?.pageSize !== 'responsive' ? '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' : 'none',
+        // Removed hardcoded padding to allow CSS .document-container to handle responsive padding
+        backgroundColor: settings?.pageSize !== 'responsive' ? (settings?.bgColor || 'white') : 'transparent' // Paper look
+    };
+
+    // If using "responsive", we rely on the parent CSS padding. 
+    // If using a fixed size (A4), we want to override the default padding and look like a sheet of paper.
+    // However, the parent `.content-scroll` has padding. Let's adjust slightly.
+    // Actually simplicity: Just apply max-width. The parent handles the scroll and main padding.
+
     return (
         <div className="content-scroll">
-            <div className="document-container" key={contentKey}>
+            <div className="document-container" key={contentKey} style={settings?.pageSize !== 'responsive' ? containerStyle : {}}>
+
+                {/* Page Footer Elements (Number & Chapter Title) */}
+                {settings?.showPageNumbers && (
+                    <>
+                        {/* Bottom Left: Chapter Title */}
+                        {!isEditor && (
+                            <div style={{ position: 'absolute', bottom: '20px', left: '40px', fontSize: '0.75rem', color: 'var(--color-text-muted)', maxWidth: '50%', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontStyle: 'italic' }}>
+                                {getTitle()}
+                            </div>
+                        )}
+                        {/* Bottom Right: Page Number */}
+                        <div style={{ position: 'absolute', bottom: '20px', right: '40px', fontSize: '0.8rem', color: 'var(--color-text-muted)', fontWeight: 'bold' }}>
+                            {lesson.fromLink ? "Active Rule" : `Page ${pageNumber ? pageNumber - 1 : "?"} of ${totalLessons ? totalLessons - 1 : "?"}`}
+                        </div>
+                    </>
+                )}
 
                 {/* Document Header */}
-                <div style={{ marginBottom: '40px', borderBottom: '1px solid var(--color-border)', paddingBottom: '20px' }}>
+                <div style={{ marginBottom: '40px', borderBottom: '1px solid var(--color-border)', paddingBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                     <span style={{
                         textTransform: 'uppercase',
                         fontSize: '0.75rem',
@@ -76,33 +189,43 @@ export default function Content({ lesson, onPrev, onNext, hasPrev, hasNext, lang
                     }}>
                         {getLevel()}
                     </span>
+
+                    {/* Header Chapter Title (Right Side) */}
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-muted)', maxWidth: '60%', textAlign: 'right' }}>
+                        {getTitle()}
+                    </span>
                 </div>
 
                 {isEditor ? (
-                    <div className="editor-wrapper">
-                        <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Edit Content ({language.toUpperCase()})</h3>
-                            <button
-                                id="save-btn"
-                                onClick={handleSave}
-                                style={{
-                                    display: 'flex', alignItems: 'center', gap: '8px',
-                                    padding: '8px 16px', backgroundColor: 'var(--color-accent)', color: 'white',
-                                    border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600,
-                                    fontSize: '0.9rem', transition: 'background 0.2s'
-                                }}
-                            >
-                                <Save size={16} /> Save to Draft
-                            </button>
-                        </div>
+                    <div className="editor-wrapper" style={{ position: 'relative' }}>
+                        {/* Floating Save Button */}
+                        <button
+                            id="save-btn"
+                            onClick={handleSave}
+                            style={{
+                                position: 'absolute',
+                                top: '-65px', // Sit in the header area
+                                right: '0',
+                                display: 'flex', alignItems: 'center', gap: '8px',
+                                padding: '8px 16px', backgroundColor: 'var(--color-accent)', color: 'white',
+                                border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 600,
+                                fontSize: '0.9rem', transition: 'background 0.2s', zIndex: 10,
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                            }}
+                        >
+                            <Save size={16} /> Save Changes
+                        </button>
+
                         <Suspense fallback={<div style={{ padding: '20px', textAlign: 'center' }}>Loading Editor...</div>}>
-                            <div style={{ resize: 'vertical', overflow: 'hidden', minHeight: '400px', height: '600px', border: '1px solid #e2e8f0', borderRadius: '6px', marginBottom: '50px', background: 'white' }}>
+                            <div style={{ minHeight: '500px' }}>
                                 <ReactQuill
+                                    ref={quillRef}
                                     theme="snow"
                                     value={editedContent}
                                     onChange={setEditedContent}
                                     modules={modules}
-                                    style={{ height: '100%', border: 'none' }}
+                                    style={{ border: 'none' }}
+                                    placeholder="Start typing..."
                                 />
                             </div>
                         </Suspense>
@@ -115,14 +238,24 @@ export default function Content({ lesson, onPrev, onNext, hasPrev, hasNext, lang
 
                 {/* Navigation Footer */}
                 {!isEditor && (
-                    <div className="nav-footer">
-                        <button className="nav-btn" onClick={onPrev} disabled={!hasPrev}>
-                            <ChevronLeft size={16} />
-                            {language === 'hi' ? 'पिछला' : 'Previous'}
+                    <div className="nav-footer" style={{ justifyContent: 'center', gap: '40px' }}>
+                        <button
+                            className="nav-btn"
+                            onClick={onPrev}
+                            disabled={!hasPrev}
+                            title={language === 'hi' ? 'पिछला' : 'Previous'}
+                            style={{ padding: '10px', borderRadius: '50%', width: '44px', height: '44px', justifyContent: 'center' }}
+                        >
+                            <ChevronLeft size={24} />
                         </button>
-                        <button className="nav-btn" onClick={onNext} disabled={!hasNext}>
-                            {language === 'hi' ? 'अगला' : 'Next'}
-                            <ChevronRight size={16} />
+                        <button
+                            className="nav-btn"
+                            onClick={onNext}
+                            disabled={!hasNext}
+                            title={language === 'hi' ? 'अगला' : 'Next'}
+                            style={{ padding: '10px', borderRadius: '50%', width: '44px', height: '44px', justifyContent: 'center' }}
+                        >
+                            <ChevronRight size={24} />
                         </button>
                     </div>
                 )}
